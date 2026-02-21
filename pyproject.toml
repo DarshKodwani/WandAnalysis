@@ -7,7 +7,12 @@ name = "wand_analysis"
 version = "0.1.0"
 description = "Analysis of the WAND fMRI dataset"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "nibabel",
+    "nilearn",
+    "matplotlib",
+    "pyyaml",
+]
 
 [project.optional-dependencies]
 dev = []
