@@ -39,17 +39,22 @@ def find_t1w(wand_root: Path, subject: str) -> Path:
     return t1w
 
 
-def brain_centre(data: np.ndarray) -> tuple[int, int, int]:
-    """Return the centre of mass of non-zero voxels as (x, y, z)."""
-    from scipy.ndimage import center_of_mass
-    mask = data > np.percentile(data[data > 0], 20)  # rough brain mask
-    cx, cy, cz = center_of_mass(mask)
-    return int(cx), int(cy), int(cz)
+def brain_centre(img: nib.Nifti1Image) -> tuple[int, int, int]:
+    """Convert world-space origin (0, 0, 0) to voxel coordinates using the affine.
+    This reliably lands at the anatomical centre of the brain regardless of orientation."""
+    affine_inv = np.linalg.inv(img.affine)
+    cx, cy, cz, _ = affine_inv @ np.array([0, 0, 0, 1])
+    # Clip to valid voxel range
+    shape = img.shape
+    cx = int(np.clip(cx, 0, shape[0] - 1))
+    cy = int(np.clip(cy, 0, shape[1] - 1))
+    cz = int(np.clip(cz, 0, shape[2] - 1))
+    return cx, cy, cz
 
 
-def plot_orthogonal(data: np.ndarray, subject: str, save_path: Path | None = None):
-    """Plot sagittal, coronal, axial slices through the centre of mass of the brain."""
-    cx, cy, cz = brain_centre(data)
+def plot_orthogonal(data: np.ndarray, img: nib.Nifti1Image, subject: str, save_path: Path | None = None):
+    """Plot sagittal, coronal, axial slices through the anatomical centre of the brain."""
+    cx, cy, cz = brain_centre(img)
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5), facecolor="black")
     fig.suptitle(f"{subject}  —  ses-03 7T T1w", color="white", fontsize=14)
@@ -123,7 +128,7 @@ def main():
     save_ortho = results_dir / f"{args.subject}_ses-03_T1w_orthogonal.png" if args.save else None
     save_mosaic = results_dir / f"{args.subject}_ses-03_T1w_mosaic.png" if args.save else None
 
-    plot_orthogonal(data, args.subject, save_ortho)
+    plot_orthogonal(data, img, args.subject, save_ortho)
     plot_mosaic(data, args.subject, save_mosaic)
 
 
