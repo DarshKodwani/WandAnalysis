@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # fetch_subject.sh - Download a single subject's data from the WAND GIN repo.
 # Usage:
-#   bash scripts/fetch_subject.sh sub-001              # fetch all modalities
-#   bash scripts/fetch_subject.sh sub-001 func         # fetch one session folder (e.g. func, anat, dwi)
+#   bash scripts/fetch_subject.sh sub-00395              # fetch all modalities
+#   bash scripts/fetch_subject.sh sub-00395 anat         # fetch one session folder (e.g. anat, func, dwi)
 #
-# Prerequisites: gin CLI installed and authenticated (bash scripts/setup_gin.sh)
+# Note: WAND subject IDs are 5-digit numbers e.g. sub-00395, not sub-001.
+# Check data/WAND/participants.tsv for the full subject list.
+#
+# Prerequisites: wand conda env active with gin CLI installed (bash scripts/setup_gin.sh)
 
 set -e
 
