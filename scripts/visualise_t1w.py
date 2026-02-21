@@ -39,9 +39,17 @@ def find_t1w(wand_root: Path, subject: str) -> Path:
     return t1w
 
 
+def brain_centre(data: np.ndarray) -> tuple[int, int, int]:
+    """Return the centre of mass of non-zero voxels as (x, y, z)."""
+    from scipy.ndimage import center_of_mass
+    mask = data > np.percentile(data[data > 0], 20)  # rough brain mask
+    cx, cy, cz = center_of_mass(mask)
+    return int(cx), int(cy), int(cz)
+
+
 def plot_orthogonal(data: np.ndarray, subject: str, save_path: Path | None = None):
-    """Plot sagittal, coronal, axial slices through the centre of the brain."""
-    cx, cy, cz = [s // 2 for s in data.shape]
+    """Plot sagittal, coronal, axial slices through the centre of mass of the brain."""
+    cx, cy, cz = brain_centre(data)
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5), facecolor="black")
     fig.suptitle(f"{subject}  —  ses-03 7T T1w", color="white", fontsize=14)

@@ -12,6 +12,7 @@ dependencies = [
     "nilearn",
     "matplotlib",
     "pyyaml",
+    "scipy",
 ]
 
 [project.optional-dependencies]
