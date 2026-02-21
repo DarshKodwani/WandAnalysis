@@ -1,0 +1,11 @@
+# Copy this file to configs/paths.yaml and fill in your local paths.
+# configs/paths.yaml is gitignored — never commit it.
+
+# Root of the WAND BIDS dataset (where sub-001/, sub-002/, ... live)
+wand_raw: /path/to/wand/bids
+
+# Where preprocessed derivatives will be written
+derivatives: /path/to/wand/derivatives
+
+# Where analysis results (GLM outputs, figures, etc.) will be written
+results: /home/dkodwani/WandAnalysis/results

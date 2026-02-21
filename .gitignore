@@ -1,0 +1,29 @@
+# Raw data - never commit
+data/raw/
+data/sourcedata/
+
+# Large derivatives
+results/**/*.nii
+results/**/*.nii.gz
+results/**/*.mgz
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Jupyter
+notebooks/.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Config with local paths (copy from paths.example.yaml)
+configs/paths.yaml
+
+# OS
+.DS_Store
