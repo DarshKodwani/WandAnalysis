@@ -1,11 +1,15 @@
 # Copy this file to configs/paths.yaml and fill in your local paths.
 # configs/paths.yaml is gitignored — never commit it.
 
-# Root of the WAND BIDS dataset (where sub-001/, sub-002/, ... live)
-wand_raw: /path/to/wand/bids
+# Root of the WAND GIN repo clone (the directory created by: gin get CUBRIC/WAND)
+# This is the folder that contains sub-001/, sub-002/, participants.tsv, etc.
+# Example: /data/WAND  or  /scratch/dkodwani/WAND
+wand_raw: /path/to/WAND
 
-# Where preprocessed derivatives will be written
-derivatives: /path/to/wand/derivatives
+# Derivatives folder within the GIN clone (pre-computed QC, brain extractions etc.)
+# Usually: <wand_raw>/derivatives
+derivatives: /path/to/WAND/derivatives
 
-# Where analysis results (GLM outputs, figures, etc.) will be written
+# Where your analysis results (GLM outputs, figures, etc.) will be written
+# This can stay inside this repo — it is gitignored for large files
 results: /home/dkodwani/WandAnalysis/results
