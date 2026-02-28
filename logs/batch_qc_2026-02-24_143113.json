@@ -1,0 +1,36 @@
+{
+  "run_id": "batch_qc_2026-02-24_143113",
+  "timestamp": "2026-02-24T14:31:13",
+  "session": "ses-06",
+  "summary": {
+    "n_subjects": 2,
+    "completed": 0,
+    "skipped": 2,
+    "failed": 0,
+    "total_duration_s": 0
+  },
+  "subjects": [
+    {
+      "subject": "sub-64927",
+      "analyses": {
+        "visualise_bold": "already_done",
+        "slice_qc": "already_done",
+        "iqm": "already_done"
+      },
+      "status": "skipped",
+      "reason": "all analyses already complete",
+      "duration_s": 0
+    },
+    {
+      "subject": "sub-43766",
+      "analyses": {
+        "visualise_bold": "already_done",
+        "slice_qc": "already_done",
+        "iqm": "already_done"
+      },
+      "status": "skipped",
+      "reason": "all analyses already complete",
+      "duration_s": 0
+    }
+  ]
+}

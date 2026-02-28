@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "wand_analysis"
@@ -19,4 +19,5 @@ dependencies = [
 dev = []
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+exclude = ["data*", "results*", "literature*", "scripts*"]

@@ -7,7 +7,7 @@
 # Note: WAND subject IDs are 5-digit numbers e.g. sub-00395, not sub-001.
 # Check data/WAND/participants.tsv for the full subject list.
 #
-# Prerequisites: wand conda env active with gin CLI installed (bash scripts/setup_gin.sh)
+# Prerequisites: run bash scripts/setup_gin.sh once before first use.
 
 set -e
 
@@ -30,6 +30,9 @@ if [[ ! -d "$WAND_RAW/.git" ]]; then
     exit 1
 fi
 
+CONDA_BIN="$HOME/miniconda3/envs/wand/bin"
+DEPLOY_KEY="$HOME/.ssh/wand_deploy_key"
+
 cd "$WAND_RAW"
 
 if [[ -n "$MODALITY" ]]; then
@@ -40,6 +43,7 @@ else
     echo "Fetching all data for $SUBJECT ..."
 fi
 
-gin get-content "$TARGET"
+GIT_SSH_COMMAND="ssh -i $DEPLOY_KEY -o IdentitiesOnly=yes" \
+    PATH="$CONDA_BIN:$PATH" git-annex get $TARGET
 
 echo "Done: data available at $WAND_RAW/$TARGET"

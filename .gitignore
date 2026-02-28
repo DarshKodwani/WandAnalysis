@@ -1,6 +1,16 @@
 # Raw data - never commit
 data/raw/
 data/sourcedata/
+data/WAND/
+data/*.nii
+data/*.nii.gz
+
+# SSH deploy keys - never commit
+scripts/wand_deploy_key
+scripts/wand_deploy_key.pub
+
+# Literature PDFs (copyright)
+literature/
 
 # Large derivatives
 results/**/*.nii

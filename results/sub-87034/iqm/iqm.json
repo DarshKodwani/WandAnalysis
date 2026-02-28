@@ -1,0 +1,11 @@
+{
+  "subject": "sub-87034",
+  "session": "ses-06",
+  "n_voxels_mask": 505167,
+  "tsnr_median": 22.8522,
+  "cov_median": 4.3758,
+  "dvars_median": 59.7935,
+  "dvars_n_spikes": 0,
+  "dvars_spike_threshold_factor": 1.5,
+  "gcor": 0.002004
+}

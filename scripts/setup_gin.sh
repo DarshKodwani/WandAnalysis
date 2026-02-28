@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
-# setup_gin.sh - Configure the GIN CLI for accessing the WAND dataset.
-# Assumes the 'wand' conda environment already exists (created by setup_env.sh).
+# setup_gin.sh - Set up read-only access to the WAND dataset using the bundled
+#                deploy key. No GIN account required.
+# Assumes the 'wand' conda environment already exists (created by firstTimeSetup.sh).
 # Usage: bash scripts/setup_gin.sh
 
 set -e
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONDA_BIN="$HOME/miniconda3/envs/wand/bin"
+DEPLOY_KEY_SRC="$REPO_ROOT/scripts/wand_deploy_key"
+DEPLOY_KEY_DST="$HOME/.ssh/wand_deploy_key"
+SSH_CONFIG="$HOME/.ssh/config"
 
 # ── 1. Verify git-annex ───────────────────────────────────────────────────────
 echo "Checking for git-annex in wand env ..."
@@ -16,43 +21,74 @@ if [[ ! -x "$CONDA_BIN/git-annex" ]]; then
 fi
 echo "  git-annex: $($CONDA_BIN/git-annex version | head -1)"
 
-# ── 2. Install gin CLI if missing ────────────────────────────────────────────
-echo "Checking for gin CLI ..."
-if [[ ! -x "$CONDA_BIN/gin" ]]; then
-    echo "  gin not found — downloading v1.12 ..."
-    curl -sL https://github.com/G-Node/gin-cli/releases/download/v1.12/gin-cli-1.12-linux.tar.gz \
-        | tar xz -C /tmp
-    cp /tmp/gin "$CONDA_BIN/gin"
-    chmod +x "$CONDA_BIN/gin"
-    echo "  gin installed."
+# ── 2. Install deploy key ─────────────────────────────────────────────────────
+echo "Installing WAND deploy key ..."
+mkdir -p "$HOME/.ssh"
+cp "$DEPLOY_KEY_SRC" "$DEPLOY_KEY_DST"
+chmod 600 "$DEPLOY_KEY_DST"
+echo "  Key installed at $DEPLOY_KEY_DST"
+
+# ── 3. Configure SSH for gin.g-node.org ──────────────────────────────────────
+echo "Configuring SSH ..."
+touch "$SSH_CONFIG"
+chmod 600 "$SSH_CONFIG"
+if ! grep -q "# WAND deploy key" "$SSH_CONFIG"; then
+    cat >> "$SSH_CONFIG" <<EOF
+
+# WAND deploy key (added by WandAnalysis/scripts/setup_gin.sh)
+Host gin.g-node.org
+    IdentityFile $DEPLOY_KEY_DST
+    IdentitiesOnly yes
+    StrictHostKeyChecking no
+EOF
+    echo "  SSH config updated."
+else
+    echo "  SSH config already set — skipping."
 fi
-echo "  gin: $(PATH=$CONDA_BIN:$PATH $CONDA_BIN/gin --version 2>&1 | head -1)"
 
-# ── 3. Log in ────────────────────────────────────────────────────────────────
-echo ""
-echo "Logging into GIN (gin.g-node.org) ..."
-echo "If you don't have an account, register at: https://gin.g-node.org/user/sign_up"
-echo ""
-PATH=$CONDA_BIN:$PATH $CONDA_BIN/gin login
+# ── 4. Locate the WAND dataset ───────────────────────────────────────────────
+BUNDLED_WAND="$REPO_ROOT/data/WAND"
 
-# ── 4. Next steps ────────────────────────────────────────────────────────────
+if [[ -d "$BUNDLED_WAND" ]]; then
+    echo "  WAND data found at $BUNDLED_WAND — no clone needed."
+    WAND_DIR="$BUNDLED_WAND"
+else
+    echo ""
+    echo "WAND data not found inside this folder."
+    echo "Where should it be cloned?"
+    read -r -p "  Destination path [default: $HOME/data/WAND]: " WAND_DIR
+    WAND_DIR="${WAND_DIR:-$HOME/data/WAND}"
+
+    if [[ -d "$WAND_DIR/.git" ]]; then
+        echo "  Repo already exists at $WAND_DIR — skipping clone."
+    else
+        echo "  Cloning WAND metadata (no large files) ..."
+        mkdir -p "$(dirname "$WAND_DIR")"
+        GIT_SSH_COMMAND="ssh -i $DEPLOY_KEY_DST -o IdentitiesOnly=yes" \
+            git clone git@gin.g-node.org:CUBRIC/WAND "$WAND_DIR"
+        cd "$WAND_DIR"
+        PATH="$CONDA_BIN:$PATH" git-annex init --quiet
+        echo "  Cloned to $WAND_DIR"
+    fi
+fi
+
+# ── 5. Write path into configs/paths.yaml ────────────────────────────────────
+PATHS_YAML="$REPO_ROOT/configs/paths.yaml"
+PATHS_EXAMPLE="$REPO_ROOT/configs/paths.example.yaml"
+if [[ ! -f "$PATHS_YAML" ]] && [[ -f "$PATHS_EXAMPLE" ]]; then
+    cp "$PATHS_EXAMPLE" "$PATHS_YAML"
+fi
+if [[ -f "$PATHS_YAML" ]] && ! grep -q "^wand_raw:" "$PATHS_YAML"; then
+    echo "wand_raw: $WAND_DIR" >> "$PATHS_YAML"
+    echo "  Written wand_raw to configs/paths.yaml"
+elif [[ -f "$PATHS_YAML" ]]; then
+    sed -i "s|^wand_raw:.*|wand_raw: $WAND_DIR|" "$PATHS_YAML"
+    echo "  Updated wand_raw in configs/paths.yaml"
+fi
+
+# ── 6. Next steps ─────────────────────────────────────────────────────────────
 echo ""
-echo "Setup complete. Next steps:"
+echo "Setup complete. To download a subject's data:"
 echo ""
-echo "  1. Add your SSH public key at: https://gin.g-node.org/user/settings/ssh"
-echo "     Your public key: ~/.ssh/id_rsa.pub (or id_ed25519.pub)"
-echo ""
-echo "  2. Activate the wand environment:"
-echo "     conda activate wand"
-echo ""
-echo "  3. Clone the WAND repo (metadata only, no large files):"
-echo "     cd /path/to/your/data && gin get CUBRIC/WAND"
-echo ""
-echo "  4. Update configs/paths.yaml to point wand_raw at the cloned WAND directory."
-echo ""
-echo "  5. Fetch a subject's 7T T1w (example):"
-echo "     cd /path/to/WAND"
-echo "     gin get-content sub-00395/ses-03/anat/sub-00395_ses-03_T1w.nii.gz"
-echo ""
-echo "     Or use the helper script:"
-echo "     bash scripts/fetch_subject.sh sub-00395 anat"
+echo "  bash scripts/fetch_subject.sh sub-00395           # all modalities"
+echo "  bash scripts/fetch_subject.sh sub-00395 anat      # one modality"

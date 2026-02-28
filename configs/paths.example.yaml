@@ -1,15 +1,9 @@
-# Copy this file to configs/paths.yaml and fill in your local paths.
-# configs/paths.yaml is gitignored — never commit it.
+# configs/paths.yaml — local paths for this machine.
+# Copy this file to configs/paths.yaml and fill in your values.
+# configs/paths.yaml is in .gitignore so it is never committed.
 
-# Root of the WAND GIN repo clone (the directory created by: gin get CUBRIC/WAND)
-# This is the folder that contains sub-001/, sub-002/, participants.tsv, etc.
-# Example: /data/WAND  or  /scratch/dkodwani/WAND
+# Root of the WAND GIN clone (set automatically by scripts/setup_gin.sh)
 wand_raw: /path/to/WAND
 
-# Derivatives folder within the GIN clone (pre-computed QC, brain extractions etc.)
-# Usually: <wand_raw>/derivatives
-derivatives: /path/to/WAND/derivatives
-
-# Where your analysis results (GLM outputs, figures, etc.) will be written
-# This can stay inside this repo — it is gitignored for large files
-results: /home/dkodwani/WandAnalysis/results
+# Where analysis outputs are written
+results: results/

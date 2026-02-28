@@ -1,0 +1,1546 @@
+{
+  "run_id": "batch_qc_2026-02-24_143455",
+  "timestamp": "2026-02-24T14:34:55",
+  "session": "ses-06",
+  "summary": {
+    "n_subjects": 153,
+    "completed": 151,
+    "skipped": 2,
+    "failed": 0,
+    "total_duration_s": 21533
+  },
+  "subjects": [
+    {
+      "subject": "sub-01187",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 54
+    },
+    {
+      "subject": "sub-04843",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 112
+    },
+    {
+      "subject": "sub-05117",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 118
+    },
+    {
+      "subject": "sub-05532",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 108
+    },
+    {
+      "subject": "sub-06180",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 115
+    },
+    {
+      "subject": "sub-06400",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 112
+    },
+    {
+      "subject": "sub-06783",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 115
+    },
+    {
+      "subject": "sub-08033",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 113
+    },
+    {
+      "subject": "sub-08096",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 108
+    },
+    {
+      "subject": "sub-08726",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 112
+    },
+    {
+      "subject": "sub-09188",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 102
+    },
+    {
+      "subject": "sub-09540",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 115
+    },
+    {
+      "subject": "sub-09720",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 116
+    },
+    {
+      "subject": "sub-10677",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 137
+    },
+    {
+      "subject": "sub-10839",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 142
+    },
+    {
+      "subject": "sub-11220",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 119
+    },
+    {
+      "subject": "sub-12054",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 150
+    },
+    {
+      "subject": "sub-12503",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 112
+    },
+    {
+      "subject": "sub-12653",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 122
+    },
+    {
+      "subject": "sub-13206",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 123
+    },
+    {
+      "subject": "sub-13953",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 129
+    },
+    {
+      "subject": "sub-14445",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 133
+    },
+    {
+      "subject": "sub-14900",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 129
+    },
+    {
+      "subject": "sub-14936",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 166
+    },
+    {
+      "subject": "sub-17279",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 203
+    },
+    {
+      "subject": "sub-17726",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 202
+    },
+    {
+      "subject": "sub-19230",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 200
+    },
+    {
+      "subject": "sub-20028",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 189
+    },
+    {
+      "subject": "sub-20609",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 182
+    },
+    {
+      "subject": "sub-22442",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 248
+    },
+    {
+      "subject": "sub-22482",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 180
+    },
+    {
+      "subject": "sub-22786",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 159
+    },
+    {
+      "subject": "sub-22943",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 120
+    },
+    {
+      "subject": "sub-23042",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 133
+    },
+    {
+      "subject": "sub-23322",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 263
+    },
+    {
+      "subject": "sub-23634",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 190
+    },
+    {
+      "subject": "sub-24295",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 168
+    },
+    {
+      "subject": "sub-24372",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 140
+    },
+    {
+      "subject": "sub-24613",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 124
+    },
+    {
+      "subject": "sub-26383",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 117
+    },
+    {
+      "subject": "sub-27711",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 114
+    },
+    {
+      "subject": "sub-27934",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 135
+    },
+    {
+      "subject": "sub-28276",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 126
+    },
+    {
+      "subject": "sub-28617",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 135
+    },
+    {
+      "subject": "sub-30090",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 117
+    },
+    {
+      "subject": "sub-30648",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 136
+    },
+    {
+      "subject": "sub-31017",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 140
+    },
+    {
+      "subject": "sub-33184",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 163
+    },
+    {
+      "subject": "sub-33639",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 142
+    },
+    {
+      "subject": "sub-34986",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 161
+    },
+    {
+      "subject": "sub-35814",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 204
+    },
+    {
+      "subject": "sub-36346",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 164
+    },
+    {
+      "subject": "sub-38553",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 186
+    },
+    {
+      "subject": "sub-38989",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 164
+    },
+    {
+      "subject": "sub-39332",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 177
+    },
+    {
+      "subject": "sub-39546",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 176
+    },
+    {
+      "subject": "sub-40079",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 194
+    },
+    {
+      "subject": "sub-41590",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 186
+    },
+    {
+      "subject": "sub-42086",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 213
+    },
+    {
+      "subject": "sub-42863",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 193
+    },
+    {
+      "subject": "sub-43240",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 204
+    },
+    {
+      "subject": "sub-43425",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 186
+    },
+    {
+      "subject": "sub-43766",
+      "analyses": {
+        "visualise_bold": "already_done",
+        "slice_qc": "already_done",
+        "iqm": "already_done"
+      },
+      "status": "skipped",
+      "reason": "all analyses already complete",
+      "duration_s": 0
+    },
+    {
+      "subject": "sub-45148",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 196
+    },
+    {
+      "subject": "sub-45644",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 184
+    },
+    {
+      "subject": "sub-46263",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 214
+    },
+    {
+      "subject": "sub-47050",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 212
+    },
+    {
+      "subject": "sub-47206",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 192
+    },
+    {
+      "subject": "sub-47379",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 187
+    },
+    {
+      "subject": "sub-47803",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 220
+    },
+    {
+      "subject": "sub-49618",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 217
+    },
+    {
+      "subject": "sub-50530",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 200
+    },
+    {
+      "subject": "sub-51896",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 206
+    },
+    {
+      "subject": "sub-52789",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 196
+    },
+    {
+      "subject": "sub-52967",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 188
+    },
+    {
+      "subject": "sub-53679",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 213
+    },
+    {
+      "subject": "sub-53696",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 191
+    },
+    {
+      "subject": "sub-54544",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 161
+    },
+    {
+      "subject": "sub-54552",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 196
+    },
+    {
+      "subject": "sub-57198",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 186
+    },
+    {
+      "subject": "sub-60324",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 183
+    },
+    {
+      "subject": "sub-61696",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 210
+    },
+    {
+      "subject": "sub-61880",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 196
+    },
+    {
+      "subject": "sub-62452",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 188
+    },
+    {
+      "subject": "sub-62533",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 208
+    },
+    {
+      "subject": "sub-63392",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 134
+    },
+    {
+      "subject": "sub-64564",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 150
+    },
+    {
+      "subject": "sub-64711",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 165
+    },
+    {
+      "subject": "sub-64907",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 174
+    },
+    {
+      "subject": "sub-64927",
+      "analyses": {
+        "visualise_bold": "already_done",
+        "slice_qc": "already_done",
+        "iqm": "already_done"
+      },
+      "status": "skipped",
+      "reason": "all analyses already complete",
+      "duration_s": 0
+    },
+    {
+      "subject": "sub-64988",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 139
+    },
+    {
+      "subject": "sub-65969",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 138
+    },
+    {
+      "subject": "sub-66055",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 148
+    },
+    {
+      "subject": "sub-67613",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 138
+    },
+    {
+      "subject": "sub-67731",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 131
+    },
+    {
+      "subject": "sub-68443",
+      "analyses": {
+        "visualise_bold": "already_done",
+        "slice_qc": "already_done",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 26
+    },
+    {
+      "subject": "sub-69577",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 130
+    },
+    {
+      "subject": "sub-69881",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 112
+    },
+    {
+      "subject": "sub-69988",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 118
+    },
+    {
+      "subject": "sub-70695",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 121
+    },
+    {
+      "subject": "sub-71473",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 119
+    },
+    {
+      "subject": "sub-71675",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 122
+    },
+    {
+      "subject": "sub-72337",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 147
+    },
+    {
+      "subject": "sub-72753",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 119
+    },
+    {
+      "subject": "sub-72783",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 121
+    },
+    {
+      "subject": "sub-73121",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 122
+    },
+    {
+      "subject": "sub-73378",
+      "analyses": {
+        "visualise_bold": "already_done",
+        "slice_qc": "already_done",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 22
+    },
+    {
+      "subject": "sub-73512",
+      "analyses": {
+        "visualise_bold": "already_done",
+        "slice_qc": "already_done",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 22
+    },
+    {
+      "subject": "sub-74182",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 117
+    },
+    {
+      "subject": "sub-74193",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 117
+    },
+    {
+      "subject": "sub-74516",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 113
+    },
+    {
+      "subject": "sub-75056",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 103
+    },
+    {
+      "subject": "sub-75086",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 128
+    },
+    {
+      "subject": "sub-75861",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 120
+    },
+    {
+      "subject": "sub-76147",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 105
+    },
+    {
+      "subject": "sub-76456",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 111
+    },
+    {
+      "subject": "sub-77660",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 138
+    },
+    {
+      "subject": "sub-77780",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 109
+    },
+    {
+      "subject": "sub-79577",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 113
+    },
+    {
+      "subject": "sub-80780",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 115
+    },
+    {
+      "subject": "sub-81101",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 116
+    },
+    {
+      "subject": "sub-81668",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 118
+    },
+    {
+      "subject": "sub-82107",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 102
+    },
+    {
+      "subject": "sub-83170",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 111
+    },
+    {
+      "subject": "sub-83997",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 110
+    },
+    {
+      "subject": "sub-84917",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 126
+    },
+    {
+      "subject": "sub-85522",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 130
+    },
+    {
+      "subject": "sub-86202",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 110
+    },
+    {
+      "subject": "sub-86435",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 113
+    },
+    {
+      "subject": "sub-86493",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 100
+    },
+    {
+      "subject": "sub-87034",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 117
+    },
+    {
+      "subject": "sub-87051",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 116
+    },
+    {
+      "subject": "sub-88141",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 104
+    },
+    {
+      "subject": "sub-88548",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 120
+    },
+    {
+      "subject": "sub-88686",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 134
+    },
+    {
+      "subject": "sub-89034",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 102
+    },
+    {
+      "subject": "sub-89440",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 108
+    },
+    {
+      "subject": "sub-89448",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 122
+    },
+    {
+      "subject": "sub-91179",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 123
+    },
+    {
+      "subject": "sub-92438",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 112
+    },
+    {
+      "subject": "sub-92635",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 125
+    },
+    {
+      "subject": "sub-93064",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 118
+    },
+    {
+      "subject": "sub-93112",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 119
+    },
+    {
+      "subject": "sub-93729",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 104
+    },
+    {
+      "subject": "sub-95017",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 116
+    },
+    {
+      "subject": "sub-95488",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 127
+    },
+    {
+      "subject": "sub-95862",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 123
+    },
+    {
+      "subject": "sub-95985",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 125
+    },
+    {
+      "subject": "sub-97902",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 126
+    },
+    {
+      "subject": "sub-97923",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 113
+    },
+    {
+      "subject": "sub-98335",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 124
+    },
+    {
+      "subject": "sub-98476",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 136
+    },
+    {
+      "subject": "sub-99501",
+      "analyses": {
+        "visualise_bold": "ran",
+        "slice_qc": "ran",
+        "iqm": "ran"
+      },
+      "status": "completed",
+      "duration_s": 138
+    }
+  ]
+}
