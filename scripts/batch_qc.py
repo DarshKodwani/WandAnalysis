@@ -196,20 +196,24 @@ def drop_bold(subject: str) -> bool:
         return True
 
     names = "  +  ".join(Path(f).name for f in to_drop)
-    step(TRASH, "Cleanup", f"dropping via git-annex ...")
+    step(TRASH, "Cleanup", f"restoring annex pointers ...")
     substep(names)
 
     env = os.environ.copy()
     env["PATH"] = str(CONDA_BIN) + ":" + env.get("PATH", "")
-    env["GIT_SSH_COMMAND"] = f"ssh -i {DEPLOY_KEY} -o IdentitiesOnly=yes"
 
+    # git-annex get leaves files in a "staged modified" state where the working
+    # tree holds the real content but the annex metadata doesn't register them as
+    # local — so git-annex drop finds nothing.  The correct fix is to restore the
+    # HEAD pointer via git checkout, which removes the real content and reinstates
+    # the lightweight annex pointer that git tracks.
     result = subprocess.run(
-        ["git-annex", "drop"] + to_drop,
+        ["git", "checkout", "HEAD", "--"] + to_drop,
         cwd=str(WAND_ROOT), env=env,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
     if result.returncode != 0:
-        step(CROSS, "Cleanup FAILED", "git-annex drop error (analysis outputs are safe)")
+        step(CROSS, "Cleanup FAILED", "git checkout error (analysis outputs are safe)")
         print(result.stdout.decode(errors="replace"), flush=True)
         return False
 
@@ -380,7 +384,8 @@ def main():
             print()
 
         # ── Drop raw BOLD (only when all analyses are now complete) ────
-        drop_bold(subject)
+        drop_ok = drop_bold(subject)
+        log_rec["bold_dropped"] = drop_ok
         print()
 
         # ── Subject footer ─────────────────────────────────────────────
