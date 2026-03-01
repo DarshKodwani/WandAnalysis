@@ -1,31 +1,20 @@
 # WAND Analysis
 
-Analysis scripts and environment setup for the WAND 7T neuroimaging dataset.
+Analysis scripts for the WAND 7T resting-state fMRI dataset (CUBRIC).
 
 ---
 
 ## Getting started
 
-You only need to do this once.
-
-**1. Run the setup script**
-
-From the folder containing this README:
+Run once from the folder containing this README:
 
 ```bash
 bash firstTimeSetup.sh
 ```
 
-This will:
-- Install Miniconda (if not already on your machine)
-- Create a `wand` conda environment with all required packages
-- Ask if you want to set up access to the WAND raw data — type `y`
-- Set up the connection to the WAND dataset automatically (no account needed)
-- Ask where you want the raw data to live on your machine (e.g. `/data/WAND`) — press Enter for the default
+This installs Miniconda (if needed), creates the `wand` conda environment with all dependencies, and configures read-only access to the WAND dataset via the bundled deploy key. No GIN account required.
 
-**2. Activate the environment**
-
-In any new terminal, always start with:
+Then in any new terminal:
 
 ```bash
 conda activate wand
@@ -33,41 +22,64 @@ conda activate wand
 
 ---
 
-## Downloading subject data
-
-Once setup is complete, use the fetch script to download data for a subject:
+## Downloading data
 
 ```bash
-# Download all data for a subject
-bash scripts/fetch_subject.sh sub-00395
+# Download one subject's func folder
+bash scripts/download.sh sub-00395 ses-06 func
 
-# Download one modality only (anat, func, dwi, etc.)
-bash scripts/fetch_subject.sh sub-00395 anat
+# Download a wider scope (session, or whole subject)
+bash scripts/download.sh sub-00395 ses-06
+bash scripts/download.sh sub-00395
+
+# Check what's currently downloaded (and how much disk it's using)
+bash scripts/find_downloaded.sh
 ```
 
-See `data/WAND/participants.tsv` for the full list of subject IDs.
+Subject IDs are in `data/WAND/participants.tsv`.
 
 ---
 
-## Running the analysis scripts
+## Running the QC pipeline
 
-Make sure the `wand` environment is active (`conda activate wand`), then:
+**Batch mode (recommended)** — processes all subjects one at a time, downloads each subject's BOLD file, runs all three analyses, then frees the disk space before moving to the next:
 
 ```bash
-# Visualise BOLD data for a subject
-python scripts/visualise_bold.py sub-00395
+python scripts/batch_qc.py --all
 ```
 
-Results are saved to the `results/` folder.
+**Single subject:**
+
+```bash
+python scripts/batch_qc.py sub-00395
+```
+
+**Run individual scripts directly:**
+
+```bash
+python scripts/visualise_bold.py sub-00395
+python scripts/slice_qc.py sub-00395
+python scripts/iqm.py sub-00395
+```
+
+Results are saved to `results/<subject>/`.  
+Batch run logs are saved to `logs/`.
 
 ---
 
 ## Folder structure
 
 ```
-firstTimeSetup.sh       # Run this first
-scripts/                # Analysis and setup scripts
-data/WAND/              # Raw WAND dataset (metadata only until you fetch subjects)
-configs/                # Local path configuration (paths.yaml, created on first setup)
-results/                # Analysis outputs
+firstTimeSetup.sh           # One-time environment + GIN key setup
+scripts/
+    utils.py                # Shared constants and helpers (imported by all scripts)
+    batch_qc.py             # Batch pipeline: download → analyse → free disk → next
+    visualise_bold.py       # Mean/std/carpet/mosaic plots
+    slice_qc.py             # Slice-mean QC (equivalent to standard MATLAB script)
+    iqm.py                  # Image quality metrics (tSNR, CoV, DVARS, GCOR)
+    download.sh             # Manual data download helper
+    find_downloaded.sh      # Show what raw data is currently on disk
+data/WAND/                  # WAND dataset (git-annex; pointer files until downloaded)
+results/                    # Analysis outputs, organised by subject
+logs/                       # JSON logs from batch_qc.py runs
 ```
