@@ -16,44 +16,16 @@ Usage:
 """
 
 import argparse
-import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
 
+from utils import REPO_ROOT, WAND_ROOT, DEFAULT_SESSION, find_bold, load_bold
+
 # ── Config ────────────────────────────────────────────────────────────────────
-REPO_ROOT       = Path(__file__).resolve().parents[1]
-WAND_ROOT       = REPO_ROOT / "data" / "WAND"
 RESULTS_SUBDIR  = "slice_qc"
-DEFAULT_SESSION = "ses-06"
-
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-def find_bold(subject: str, session: str) -> Path:
-    path = WAND_ROOT / subject / session / "func" / \
-           f"{subject}_{session}_task-rest_bold.nii.gz"
-    if not path.exists():
-        sys.exit(
-            f"ERROR: BOLD file not found:\n  {path}\n"
-            f"Run: bash scripts/download.sh {subject} {session} func"
-        )
-    if path.stat().st_size < 1024 * 1024:
-        sys.exit(
-            f"ERROR: {path.name} looks like a git-annex pointer "
-            f"({path.stat().st_size} bytes).\n"
-            f"Run: bash scripts/download.sh {subject} {session} func {path.name}"
-        )
-    return path
-
-
-def load_bold(path: Path):
-    print(f"  Loading {path.name} ...", flush=True)
-    img  = nib.load(str(path))
-    data = img.get_fdata(dtype=np.float32)
-    print(f"  Shape: {data.shape}  |  voxel size: {img.header.get_zooms()[:3]}")
-    return data
 
 
 def save_fig(fig, out_path: Path):
@@ -178,7 +150,7 @@ def main():
     print(f"  Session : {args.session}")
     print(f"  Output  : {out_dir.relative_to(REPO_ROOT)}\n")
 
-    data = load_bold(bold_path)
+    _, data, _ = load_bold(bold_path)
 
     print("\n  Computing slice means ...", flush=True)
     slicemean      = compute_slicemean(data)        # [volumes × slices]

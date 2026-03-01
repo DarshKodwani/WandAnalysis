@@ -1,9 +1,0 @@
-# configs/paths.yaml — local paths for this machine.
-# Copy this file to configs/paths.yaml and fill in your values.
-# configs/paths.yaml is in .gitignore so it is never committed.
-
-# Root of the WAND GIN clone (set automatically by scripts/setup_gin.sh)
-wand_raw: /path/to/WAND
-
-# Where analysis outputs are written
-results: results/

@@ -4,8 +4,8 @@
 # What it does:
 #   1. Installs Miniconda (if not already present)
 #   2. Creates the 'wand' conda environment with Python 3.11 and git-annex
-#   3. Installs the wand_analysis package in editable mode
-#   4. Optionally runs the GIN CLI setup (for WAND dataset access)
+#   3. Installs Python dependencies (nibabel, nilearn, matplotlib, scipy, pyyaml)
+#   4. Sets up read-only GIN access using the bundled deploy key
 #
 # Usage:
 #   bash firstTimeSetup.sh
@@ -20,6 +20,9 @@ CONDA_ROOT="$HOME/miniconda3"
 CONDA="$CONDA_ROOT/bin/conda"
 ENV_NAME="wand"
 ENV_BIN="$CONDA_ROOT/envs/$ENV_NAME/bin"
+DEPLOY_KEY_SRC="$REPO_ROOT/scripts/wand_deploy_key"
+DEPLOY_KEY_DST="$HOME/.ssh/wand_deploy_key"
+SSH_CONFIG="$HOME/.ssh/config"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 cyan()  { printf '\033[0;36m%s\033[0m\n' "$*"; }
@@ -66,10 +69,10 @@ else
     green "  Environment '$ENV_NAME' created."
 fi
 
-# ── Step 3: Install dependencies ─────────────────────────────────────────────
-cyan "[3/3] Installing dependencies from pyproject.toml ..."
+# ── Step 3: Install Python dependencies ──────────────────────────────────────────
+cyan "[3/4] Installing Python dependencies ..."
 
-"$ENV_BIN/pip" install -q -e "$REPO_ROOT"
+"$ENV_BIN/pip" install -q nibabel nilearn matplotlib scipy pyyaml
 green "  Dependencies installed."
 
 # ── Quick sanity check ────────────────────────────────────────────────────────
@@ -84,14 +87,42 @@ print(f"  scipy      {scipy.__version__}")
 print("  All dependencies importable ✓")
 EOF
 
-# ── Optional: GIN setup ───────────────────────────────────────────────────────
+# ── Step 4: GIN deploy key setup ─────────────────────────────────────────────
 echo ""
-echo "GIN gives you access to the WAND raw dataset (no GIN account needed)."
-read -r -p "Set up WAND data access now? [y/N] " GIN_REPLY
-if [[ "${GIN_REPLY,,}" == "y" ]]; then
-    bash "$REPO_ROOT/scripts/setup_gin.sh"
+cyan "[4/4] Configuring WAND data access (GIN deploy key) ..."
+
+if [[ ! -f "$DEPLOY_KEY_SRC" ]]; then
+    warn "  Deploy key not found at $DEPLOY_KEY_SRC — skipping."
+    warn "  Data download will not work until the key is present in scripts/."
 else
-    echo "  Skipped. Run later with:  bash scripts/setup_gin.sh"
+    mkdir -p "$HOME/.ssh"
+    cp "$DEPLOY_KEY_SRC" "$DEPLOY_KEY_DST"
+    chmod 600 "$DEPLOY_KEY_DST"
+    echo "  Deploy key installed at $DEPLOY_KEY_DST"
+
+    touch "$SSH_CONFIG"
+    chmod 600 "$SSH_CONFIG"
+    if ! grep -q "# WAND deploy key" "$SSH_CONFIG"; then
+        cat >> "$SSH_CONFIG" <<SSHEOF
+
+# WAND deploy key (added by WandAnalysis/firstTimeSetup.sh)
+Host gin.g-node.org
+    IdentityFile $DEPLOY_KEY_DST
+    IdentitiesOnly yes
+    StrictHostKeyChecking no
+SSHEOF
+        echo "  SSH config updated."
+    else
+        echo "  SSH config already set — skipping."
+    fi
+
+    if [[ ! -x "$ENV_BIN/git-annex" ]]; then
+        warn "  git-annex not found in $ENV_BIN — data download unavailable."
+        warn "  Try: conda install -n $ENV_NAME git-annex -c conda-forge"
+    else
+        echo "  git-annex: $($ENV_BIN/git-annex version | head -1)"
+    fi
+    green "  GIN access configured."
 fi
 
 # ── Done ──────────────────────────────────────────────────────────────────────
@@ -104,8 +135,8 @@ echo "Activate your environment in any new terminal with:"
 echo ""
 echo "    conda activate $ENV_NAME"
 echo ""
-echo "Then you can run the analysis scripts, e.g.:"
+echo "Then run the pipeline, e.g.:"
 echo ""
-echo "    python scripts/step1_visualiseT1w.py"
-echo "    python scripts/step2_inspectParams.py"
+echo "    python scripts/batch_qc.py --all"
+echo "    python scripts/visualise_bold.py sub-43766"
 echo ""

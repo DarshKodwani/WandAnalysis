@@ -31,7 +31,6 @@ Usage:
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
 import matplotlib
@@ -41,44 +40,16 @@ import nibabel as nib
 import numpy as np
 from nilearn import plotting
 
+from utils import REPO_ROOT, WAND_ROOT, DEFAULT_SESSION, find_bold, load_bold
+
 # ── Config ────────────────────────────────────────────────────────────────────
-REPO_ROOT       = Path(__file__).resolve().parents[1]
-WAND_ROOT       = REPO_ROOT / "data" / "WAND"
 RESULTS_SUBDIR  = "iqm"
-DEFAULT_SESSION = "ses-06"
 
 # DVARS spike threshold multiplier (frames > SPIKE_FACTOR × median DVARS flagged)
 SPIKE_FACTOR = 1.5
 # Brain mask threshold: voxels with mean > MASK_PERCENTILE-th percentile × MASK_FRAC
 MASK_PERCENTILE = 95
 MASK_FRAC       = 0.1
-
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-def find_bold(subject: str, session: str) -> Path:
-    path = WAND_ROOT / subject / session / "func" / \
-           f"{subject}_{session}_task-rest_bold.nii.gz"
-    if not path.exists():
-        sys.exit(
-            f"ERROR: BOLD file not found:\n  {path}\n"
-            f"Run: bash scripts/download.sh {subject} {session} func"
-        )
-    if path.stat().st_size < 1024 * 1024:
-        sys.exit(
-            f"ERROR: {path.name} looks like a git-annex pointer "
-            f"({path.stat().st_size} bytes).\n"
-            f"Run: bash scripts/download.sh {subject} {session} func {path.name}"
-        )
-    return path
-
-
-def load_bold(path: Path):
-    """Load 4D BOLD and return (img, data_float32, affine)."""
-    print(f"  Loading {path.name} ...", flush=True)
-    img  = nib.load(str(path))
-    data = img.get_fdata(dtype=np.float32)
-    print(f"  Shape : {data.shape}  |  voxel size : {img.header.get_zooms()[:3]}")
-    return img, data, img.affine
 
 
 def make_brain_mask(data: np.ndarray) -> np.ndarray:

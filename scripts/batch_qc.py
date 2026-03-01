@@ -7,7 +7,7 @@ For each subject:
   3. Runs visualise_bold.py  (saves plots + mean_bold.nii.gz + std_bold.nii.gz)
   4. Runs slice_qc.py        (saves plots + slicemean.npy)
   5. Runs iqm.py             (saves iqm.json + tSNR/CoV maps + DVARS timeseries)
-  6. Drops the raw BOLD files via git-annex only when all analyses complete
+  6. Drops the raw BOLD files (restores git-annex pointer) when all analyses complete
   7. Moves to the next subject
 
 Usage:
@@ -32,10 +32,9 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from utils import REPO_ROOT, WAND_ROOT, DEFAULT_SESSION as SESSION, is_real_file
+
 # ── Config ────────────────────────────────────────────────────────────────────
-REPO_ROOT  = Path(__file__).resolve().parents[1]
-WAND_ROOT  = REPO_ROOT / "data" / "WAND"
-SESSION    = "ses-06"
 CONDA_BIN  = Path.home() / "miniconda3" / "envs" / "wand" / "bin"
 DEPLOY_KEY = Path.home() / ".ssh" / "wand_deploy_key"
 LOGS_DIR   = REPO_ROOT / "logs"
@@ -86,10 +85,6 @@ def elapsed(start):
 
 
 # ── Core helpers ──────────────────────────────────────────────────────────────
-def is_real_file(path: Path) -> bool:
-    return path.exists() and path.stat().st_size > 1024 * 1024
-
-
 def visualise_bold_done(subject: str) -> bool:
     return (REPO_ROOT / "results" / subject / "visualise_bold" / "mean_bold.nii.gz").exists()
 
