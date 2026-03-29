@@ -1,11 +1,11 @@
-name: CI
+name: Lint
 
 on:
   push:
   pull_request:
 
 jobs:
-  test:
+  ruff:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,8 +23,3 @@ jobs:
         shell: bash -l {0}
         run: |
           ruff check scripts tests
-
-      - name: Run pytest
-        shell: bash -l {0}
-        run: |
-          pytest -q
