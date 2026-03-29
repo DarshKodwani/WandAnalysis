@@ -1,7 +1,7 @@
 # WAND Analysis
 
-[![Lint](https://github.com/DarshKodwani/WandAnalysis/actions/workflows/lint.yml/badge.svg?branch=darshAnalysis)](https://github.com/DarshKodwani/WandAnalysis/actions/workflows/lint.yml?query=branch%3AdarshAnalysis)
-[![Tests](https://github.com/DarshKodwani/WandAnalysis/actions/workflows/tests.yml/badge.svg?branch=darshAnalysis)](https://github.com/DarshKodwani/WandAnalysis/actions/workflows/tests.yml?query=branch%3AdarshAnalysis)
+[![Lint](https://github.com/DarshKodwani/WandAnalysis/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/DarshKodwani/WandAnalysis/actions/workflows/lint.yml?query=branch%3Amain)
+[![Tests](https://github.com/DarshKodwani/WandAnalysis/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/DarshKodwani/WandAnalysis/actions/workflows/tests.yml?query=branch%3Amain)
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 
