@@ -1,0 +1,26 @@
+{
+  "run_id": "batch_qc_2026-03-01_134642",
+  "timestamp": "2026-03-01T13:46:42",
+  "session": "ses-06",
+  "summary": {
+    "n_subjects": 1,
+    "completed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "total_duration_s": 0
+  },
+  "subjects": [
+    {
+      "subject": "sub-00395",
+      "analyses": {
+        "visualise_bold": "not_run",
+        "slice_qc": "not_run",
+        "iqm": "not_run"
+      },
+      "status": "failed",
+      "failed_at": "download",
+      "error": "scripts/download.sh: line 37: cd: scripts/../data/WAND: No such file or directory",
+      "duration_s": 0
+    }
+  ]
+}

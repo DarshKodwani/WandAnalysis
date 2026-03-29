@@ -4,7 +4,7 @@
 # What it does:
 #   1. Installs Miniconda (if not already present)
 #   2. Creates the 'wand' conda environment with Python 3.11 and git-annex
-#   3. Installs Python dependencies (nibabel, nilearn, matplotlib, scipy, pyyaml)
+#   3. Installs Python dependencies (nibabel, nilearn, matplotlib, scipy, pyyaml, pandas)
 #   4. Sets up GIN access (deploy key + gin CLI binary)
 #   5. Downloads the CUBRIC/WAND dataset into data/
 #
@@ -157,18 +157,23 @@ fi
 # ── Step 3: Install Python dependencies ──────────────────────────────────────────
 cyan "[3/5] Installing Python dependencies ..."
 
-"$ENV_BIN/pip" install -q nibabel nilearn matplotlib scipy pyyaml
+"$ENV_BIN/pip" install -q nibabel nilearn matplotlib scipy pyyaml pandas
 green "  Dependencies installed."
+
+echo ""
+cyan "Installing optional developer tooling ..."
+"$ENV_BIN/pip" install -q pytest ruff pre-commit || warn "  Could not install optional developer tooling."
 
 # ── Quick sanity check ────────────────────────────────────────────────────────
 echo ""
 cyan "Sanity check ..."
 "$ENV_BIN/python" - <<'EOF'
-import nibabel, nilearn, matplotlib, yaml, scipy
+import nibabel, nilearn, matplotlib, yaml, scipy, pandas
 print(f"  nibabel    {nibabel.__version__}")
 print(f"  nilearn    {nilearn.__version__}")
 print(f"  matplotlib {matplotlib.__version__}")
 print(f"  scipy      {scipy.__version__}")
+print(f"  pandas     {pandas.__version__}")
 print("  All dependencies importable ✓")
 EOF
 

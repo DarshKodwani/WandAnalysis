@@ -1,0 +1,113 @@
+% ============================================================
+%  paper2.tex  -- Paper 2 template
+%  Compile with: pdflatex paper2.tex
+% ============================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[
+    top=2.5cm, bottom=2.5cm,
+    left=2.5cm, right=2.5cm
+]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+]{hyperref}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{setspace}
+\setstretch{1.15}
+
+\title{\textbf{Network Discovery and Network-Based Inference Under Analysis Uncertainty in fMRI}}
+
+\author{
+    Darsh Kodwani\\
+    \small Royal Holloway, University of London
+    \and
+    Narender Ramnani\\
+    \small Royal Holloway, University of London
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\begin{abstract}
+This follow-up paper will build on Paper 1 by starting from the connectivity object and examining how downstream representational and inferential choices shape scientific conclusions in fMRI. The focus will be on two distinct but related problems: network discovery and network-based inference. The first concerns how large-scale networks are identified from connectivity data, for example through clustering, decomposition, or related data-driven procedures. The second concerns how predefined network definitions are used to summarise connectivity matrices into interpretable claims, such as within-network coherence, between-network coupling, or graph-theoretic measures. The central question is whether these downstream conclusions remain stable across reasonable analysis choices or whether they are contingent on specific representational assumptions. This paper will remain deliberately high level at the current stage of the project. Its purpose is to define the conceptual scope of the follow-up work, to distinguish discovery from inference, and to provide a placeholder structure that can later be populated once the results of Paper 1 have constrained the upstream analysis choices and quantified uncertainty in the connectivity object itself.
+\end{abstract}
+
+\newpage
+
+\section{Introduction}
+
+This paper is the planned follow-up to Paper 1. Its role is to move from connectivity estimation to downstream interpretation. At this stage, the file serves as a high-level template rather than a fully scoped manuscript.
+
+\section{Positioning Relative to Paper 1}
+
+Paper 1 establishes a framework for scientific robustness up to the connectivity matrix. Paper 2 will begin from that connectivity object and ask how additional assumptions about network structure and summary statistics shape downstream claims.
+
+\section{Two Problems}
+
+\subsection{Network Discovery}
+
+This section will later describe approaches for discovering large-scale organisation from connectivity data, including the assumptions built into each method and the degree to which the discovered structure is stable across upstream and downstream choices.
+
+\subsection{Network-Based Inference}
+
+This section will later describe approaches that begin from predefined network labels or atlases and ask how claims based on within-network, between-network, or graph-based summaries depend on the chosen representation.
+
+\section{Planned High-Level Questions}
+
+The follow-up paper is intended to address questions such as:
+
+\begin{enumerate}[label=\arabic*.]
+    \item How stable is network discovery across reasonable choices made upstream and downstream of connectivity estimation?
+    \item How stable are atlas-based network summaries across reasonable choices?
+    \item When do network-level claims exceed the uncertainty induced by analysis specification?
+\end{enumerate}
+
+\section{Candidate Analysis Families}
+
+At a high level, the follow-up paper may compare:
+
+\begin{itemize}
+    \item data-driven discovery methods,
+    \item atlas-based network assignments,
+    \item within-network and between-network summaries,
+    \item graph-theoretic summaries,
+    \item possibly brain-behaviour association models if the scope remains manageable.
+\end{itemize}
+
+\section{Planned Structure}
+
+This paper will later be expanded to include:
+
+\begin{enumerate}[label=\arabic*.]
+    \item a formal distinction between network discovery and network-based inference,
+    \item a description of the connectivity objects inherited from Paper 1,
+    \item a specification of the downstream branch points,
+    \item robustness metrics for network-level claims,
+    \item empirical analyses using the WAND 3T and 7T resting-state data.
+\end{enumerate}
+
+\section{Current Status}
+
+This document is intentionally a placeholder. The detailed scope of Paper 2 will be revisited after the analysis plan and empirical results of Paper 1 are more fully developed.
+
+\newpage
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\end{document}

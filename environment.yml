@@ -1,0 +1,18 @@
+name: wand
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - nibabel
+  - nilearn
+  - pyyaml
+  - pytest
+  - ruff
+  - pip
+  - pip:
+      - pre-commit
