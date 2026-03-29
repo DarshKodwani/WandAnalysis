@@ -1,5 +1,5 @@
 """
-visualise_bold.py - QC visualisation of a 7T resting-state BOLD scan.
+visualise_bold.py - QC visualisation of a resting-state BOLD scan.
 
 Generates four plots saved to results/<subject>/visualise_bold/:
   1. mean_bold.png       - Mean EPI image (ortho view)
@@ -10,6 +10,7 @@ Generates four plots saved to results/<subject>/visualise_bold/:
 Usage:
     python scripts/visualise_bold.py sub-43766
     python scripts/visualise_bold.py sub-43766 --session ses-06
+    python scripts/visualise_bold.py sub-43766 --session ses-06 --task rest
 """
 
 import argparse
@@ -20,7 +21,7 @@ import nibabel as nib
 import numpy as np
 from nilearn import plotting, image
 
-from utils import REPO_ROOT, WAND_ROOT, DEFAULT_SESSION, find_bold, load_bold
+from utils import REPO_ROOT, DEFAULT_SESSION, DEFAULT_TASK, find_bold, load_bold
 
 # ── Config ────────────────────────────────────────────────────────────────────
 RESULTS_SUBDIR = "visualise_bold"
@@ -142,14 +143,16 @@ def plot_middle_volume(data, affine, out_dir: Path, subject: str, session: str):
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(
-        description="QC visualisation of a 7T resting-state BOLD scan."
+        description="QC visualisation of a resting-state BOLD scan."
     )
     parser.add_argument("subject", help="Subject ID, e.g. sub-43766")
     parser.add_argument("--session", default=DEFAULT_SESSION,
                         help=f"Session ID (default: {DEFAULT_SESSION})")
+    parser.add_argument("--task", default=DEFAULT_TASK,
+                        help=f"Task label (default: {DEFAULT_TASK})")
     args = parser.parse_args()
 
-    bold_path = find_bold(args.subject, args.session)
+    bold_path = find_bold(args.subject, args.session, args.task)
     out_dir   = REPO_ROOT / "results" / args.subject / RESULTS_SUBDIR
     out_dir.mkdir(parents=True, exist_ok=True)
 

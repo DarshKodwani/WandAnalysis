@@ -7,6 +7,8 @@
 
 Quality-control and metric analysis pipeline for the CUBRIC WAND resting-state fMRI dataset.
 
+The code now uses a dataset configuration file so the same scripts can be adapted to other BIDS-style datasets without changing code.
+
 This repository is designed for:
 - Running reproducible subject-level QC on BOLD data.
 - Aggregating image quality metrics across subjects.
@@ -59,6 +61,43 @@ conda env create -f environment.yml
 conda activate wand
 ```
 
+## Dataset Configuration (for portability)
+
+Default settings live in `configs/dataset.yaml`:
+
+```yaml
+name: WAND
+data_root: data/WAND
+results_root: results
+default_session: ses-06
+default_task: rest
+mriqc_analysis_relpath: derivatives/mriqc/analysis
+field_strength_sessions:
+    3t: ses-03
+    7t: ses-06
+```
+
+To adapt this repo to a new dataset, update this file instead of editing script code.
+An editable template is provided at `configs/dataset.example.yaml`.
+
+Common portability assumptions:
+- Input follows a BIDS-like folder layout.
+- BOLD files follow `sub-XXX_ses-YYY_task-TTT_bold.nii.gz` naming.
+- MRIQC summaries (if used) are under the configured `mriqc_analysis_relpath`.
+
+### Validate inputs before running analyses
+
+Use the lightweight validator to catch missing files early:
+
+```bash
+python scripts/validate_inputs.py
+python scripts/validate_inputs.py --session ses-06 --task rest
+python scripts/validate_inputs.py --subjects sub-00395 sub-01187
+python scripts/validate_inputs.py --require-mriqc
+```
+
+The validator exits with code 0 only when required inputs are present.
+
 ## Data Access and Downloading
 
 Common data operations:
@@ -110,9 +149,14 @@ python scripts/batch_qc.py --file subjects.txt
 python scripts/visualise_bold.py sub-00395
 python scripts/slice_qc.py sub-00395
 python scripts/iqm.py sub-00395
+python scripts/validate_inputs.py --session ses-06 --task rest
 python scripts/group_qc.py
 python scripts/compare_3t_7t_mriqc.py --metric tsnr
 python scripts/compare_3t_7t_mriqc.py --metric snr
+
+# Optional explicit overrides
+python scripts/batch_qc.py --all --session ses-06 --task rest
+python scripts/visualise_bold.py sub-00395 --session ses-06 --task rest
 ```
 
 ## Output Layout
@@ -146,7 +190,12 @@ scripts/
     compare_3t_7t_mriqc.py               # 3T vs 7T MRIQC comparisons
     download.sh                          # Controlled data retrieval
     find_downloaded.sh                   # Local annex content check
+    validate_inputs.py                   # Lightweight pre-run input validator
     test_moco_tsnr.py                    # Motion-correction tSNR comparison experiment
+
+configs/
+    dataset.yaml                         # Dataset/session/task/path configuration
+    dataset.example.yaml                 # Template profile for non-WAND datasets
 
 data/
     WAND/                                # BIDS + derivatives (annex-backed)

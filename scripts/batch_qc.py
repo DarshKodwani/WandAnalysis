@@ -32,7 +32,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from utils import REPO_ROOT, WAND_ROOT, DEFAULT_SESSION as SESSION, is_real_file
+from utils import DATASET_NAME, DATASET_ROOT, DEFAULT_SESSION, DEFAULT_TASK, REPO_ROOT, is_real_file
 
 # ── Config ────────────────────────────────────────────────────────────────────
 CONDA_BIN  = Path.home() / "miniconda3" / "envs" / "wand" / "bin"
@@ -118,18 +118,18 @@ def run_cmd(cmd: list, cwd: Path = REPO_ROOT, extra_env: dict = None):
 
 
 # ── Pipeline steps ─────────────────────────────────────────────────────────────
-def download(subject: str):
+def download(subject: str, session: str, task: str):
     """Returns (ok: bool, error: str)."""
-    bold_path = WAND_ROOT / subject / SESSION / "func" / \
-                f"{subject}_{SESSION}_task-rest_bold.nii.gz"
+    bold_path = DATASET_ROOT / subject / session / "func" / \
+                f"{subject}_{session}_task-{task}_bold.nii.gz"
 
     if is_real_file(bold_path):
         step(SKIP, "Download", "BOLD already present — skipping")
         return True, ""
 
-    step(ARROW, "Download", f"fetching {SESSION}/func from GIN ...")
+    step(ARROW, "Download", f"fetching {session}/func from GIN ...")
     t = time.time()
-    rc, err = run_cmd(["bash", "scripts/download.sh", subject, SESSION, "func"])
+    rc, err = run_cmd(["bash", "scripts/download.sh", subject, session, "func"])
     if rc != 0:
         step(CROSS, "Download FAILED", f"exit code {rc}")
         return False, err
@@ -137,11 +137,21 @@ def download(subject: str):
     return True, ""
 
 
-def run_visualise_bold(subject: str):
+def run_visualise_bold(subject: str, session: str, task: str):
     """Returns (ok: bool, error: str)."""
     step(ARROW, "Spatial QC", "running visualise_bold.py ...")
     t = time.time()
-    rc, err = run_cmd([str(CONDA_BIN / "python"), "scripts/visualise_bold.py", subject])
+    rc, err = run_cmd(
+        [
+            str(CONDA_BIN / "python"),
+            "scripts/visualise_bold.py",
+            subject,
+            "--session",
+            session,
+            "--task",
+            task,
+        ]
+    )
     if rc != 0:
         step(CROSS, "Spatial QC FAILED", f"exit code {rc}")
         return False, err
@@ -150,11 +160,21 @@ def run_visualise_bold(subject: str):
     return True, ""
 
 
-def run_slice_qc(subject: str):
+def run_slice_qc(subject: str, session: str, task: str):
     """Returns (ok: bool, error: str)."""
     step(ARROW, "Slice QC", "running slice_qc.py ...")
     t = time.time()
-    rc, err = run_cmd([str(CONDA_BIN / "python"), "scripts/slice_qc.py", subject])
+    rc, err = run_cmd(
+        [
+            str(CONDA_BIN / "python"),
+            "scripts/slice_qc.py",
+            subject,
+            "--session",
+            session,
+            "--task",
+            task,
+        ]
+    )
     if rc != 0:
         step(CROSS, "Slice QC FAILED", f"exit code {rc}")
         return False, err
@@ -163,11 +183,21 @@ def run_slice_qc(subject: str):
     return True, ""
 
 
-def run_iqm(subject: str):
+def run_iqm(subject: str, session: str, task: str):
     """Returns (ok: bool, error: str)."""
     step(ARROW, "IQM", "running iqm.py ...")
     t = time.time()
-    rc, err = run_cmd([str(CONDA_BIN / "python"), "scripts/iqm.py", subject])
+    rc, err = run_cmd(
+        [
+            str(CONDA_BIN / "python"),
+            "scripts/iqm.py",
+            subject,
+            "--session",
+            session,
+            "--task",
+            task,
+        ]
+    )
     if rc != 0:
         step(CROSS, "IQM FAILED", f"exit code {rc}")
         return False, err
@@ -176,14 +206,14 @@ def run_iqm(subject: str):
     return True, ""
 
 
-def drop_bold(subject: str) -> bool:
-    bold  = f"{subject}/{SESSION}/func/{subject}_{SESSION}_task-rest_bold.nii.gz"
-    sbref = f"{subject}/{SESSION}/func/{subject}_{SESSION}_task-rest_sbref.nii.gz"
+def drop_bold(subject: str, session: str, task: str) -> bool:
+    bold = f"{subject}/{session}/func/{subject}_{session}_task-{task}_bold.nii.gz"
+    sbref = f"{subject}/{session}/func/{subject}_{session}_task-{task}_sbref.nii.gz"
 
     to_drop = []
-    if is_real_file(WAND_ROOT / bold):
+    if is_real_file(DATASET_ROOT / bold):
         to_drop.append(bold)
-    if is_real_file(WAND_ROOT / sbref):
+    if is_real_file(DATASET_ROOT / sbref):
         to_drop.append(sbref)
 
     if not to_drop:
@@ -204,7 +234,7 @@ def drop_bold(subject: str) -> bool:
     # the lightweight annex pointer that git tracks.
     result = subprocess.run(
         ["git", "checkout", "HEAD", "--"] + to_drop,
-        cwd=str(WAND_ROOT), env=env,
+        cwd=str(DATASET_ROOT), env=env,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
     if result.returncode != 0:
@@ -217,16 +247,16 @@ def drop_bold(subject: str) -> bool:
     return True
 
 
-def discover_subjects() -> list:
+def discover_subjects(session: str) -> list:
     """
-    Find all sub-* directories in WAND_ROOT that contain a ses-06/func/ folder.
+    Find all sub-* directories in DATASET_ROOT that contain a <session>/func/ folder.
     Subjects without that structure are silently skipped — they don't have
     the expected 7T resting-state data for this session.
     """
-    candidates = sorted(p.name for p in WAND_ROOT.iterdir()
+    candidates = sorted(p.name for p in DATASET_ROOT.iterdir()
                         if p.is_dir() and p.name.startswith("sub-"))
     valid = [s for s in candidates
-             if (WAND_ROOT / s / SESSION / "func").is_dir()]
+             if (DATASET_ROOT / s / session / "func").is_dir()]
     return valid
 
 
@@ -240,13 +270,20 @@ def main():
     parser.add_argument("--file", metavar="FILE",
                         help="Text file with one subject ID per line")
     parser.add_argument("--all", action="store_true",
-                        help=f"Run on every subject in WAND that has a {SESSION}/func/ folder")
+                        help=f"Run on every subject in dataset root that has a {DEFAULT_SESSION}/func/ folder")
+    parser.add_argument("--session", default=DEFAULT_SESSION,
+                        help=f"Session ID to process (default: {DEFAULT_SESSION})")
+    parser.add_argument("--task", default=DEFAULT_TASK,
+                        help=f"Task label used in BOLD filename (default: {DEFAULT_TASK})")
     args = parser.parse_args()
 
+    session = args.session
+    task = args.task
+
     if args.all:
-        subjects = discover_subjects()
+        subjects = discover_subjects(session)
         if not subjects:
-            parser.error(f"No subjects found with {SESSION}/func/ in {WAND_ROOT}")
+            parser.error(f"No subjects found with {session}/func/ in {DATASET_ROOT}")
     elif args.file:
         subjects = Path(args.file).read_text().splitlines()
         subjects = [s.strip() for s in subjects if s.strip() and not s.startswith("#")]
@@ -267,8 +304,8 @@ def main():
     # ── Banner ─────────────────────────────────────────────────────────────────
     print()
     bar("═", BLU)
-    header_line(f"WAND  •  Batch QC Pipeline", BLU + B)
-    header_line(f"Session: {SESSION}   •   Subjects: {n}", DIM)
+    header_line(f"{DATASET_NAME}  •  Batch QC Pipeline", BLU + B)
+    header_line(f"Session: {session}  •  Task: {task}  •  Subjects: {n}", DIM)
     bar("═", BLU)
     print()
 
@@ -321,7 +358,7 @@ def main():
             print()
 
         # ── Download ───────────────────────────────────────────────────
-        ok, err = download(subject)
+        ok, err = download(subject, session, task)
         if not ok:
             log_rec["status"]     = "failed"
             log_rec["failed_at"]  = "download"
@@ -335,7 +372,7 @@ def main():
 
         # ── Spatial QC ─────────────────────────────────────────────────
         if not vb_done:
-            ok, err = run_visualise_bold(subject)
+            ok, err = run_visualise_bold(subject, session, task)
             if not ok:
                 log_rec["status"]     = "failed"
                 log_rec["failed_at"]  = "visualise_bold"
@@ -350,7 +387,7 @@ def main():
 
         # ── Slice QC ───────────────────────────────────────────────────
         if not slc_done:
-            ok, err = run_slice_qc(subject)
+            ok, err = run_slice_qc(subject, session, task)
             if not ok:
                 log_rec["status"]     = "failed"
                 log_rec["failed_at"]  = "slice_qc"
@@ -365,7 +402,7 @@ def main():
 
         # ── IQM ────────────────────────────────────────────────────────
         if not iq_done:
-            ok, err = run_iqm(subject)
+            ok, err = run_iqm(subject, session, task)
             if not ok:
                 log_rec["status"]     = "failed"
                 log_rec["failed_at"]  = "iqm"
@@ -379,7 +416,7 @@ def main():
             print()
 
         # ── Drop raw BOLD (only when all analyses are now complete) ────
-        drop_ok = drop_bold(subject)
+        drop_ok = drop_bold(subject, session, task)
         log_rec["bold_dropped"] = drop_ok
         print()
 
@@ -398,7 +435,8 @@ def main():
     log = {
         "run_id":       run_id,
         "timestamp":    run_ts.isoformat(timespec="seconds"),
-        "session":      SESSION,
+        "session":      session,
+        "task":         task,
         "summary": {
             "n_subjects":   n,
             "completed":    len(completed),

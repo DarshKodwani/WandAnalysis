@@ -1,0 +1,9 @@
+name: WAND
+data_root: data/WAND
+results_root: results
+default_session: ses-06
+default_task: rest
+mriqc_analysis_relpath: derivatives/mriqc/analysis
+field_strength_sessions:
+  3t: ses-03
+  7t: ses-06

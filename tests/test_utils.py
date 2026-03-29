@@ -32,14 +32,14 @@ def test_find_bold_returns_path_when_present(tmp_path: Path, monkeypatch: pytest
     bold_path = bold_dir / f"{subject}_{session}_task-rest_bold.nii.gz"
     bold_path.write_bytes(b"x" * (1024 * 1024 + 10))
 
-    monkeypatch.setattr(utils, "WAND_ROOT", tmp_path)
+    monkeypatch.setattr(utils, "DATASET_ROOT", tmp_path)
     found = utils.find_bold(subject, session)
 
     assert found == bold_path
 
 
 def test_find_bold_raises_system_exit_when_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(utils, "WAND_ROOT", tmp_path)
+    monkeypatch.setattr(utils, "DATASET_ROOT", tmp_path)
     with pytest.raises(SystemExit):
         utils.find_bold("sub-00002", "ses-06")
 

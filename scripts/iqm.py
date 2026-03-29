@@ -1,5 +1,5 @@
 """
-iqm.py - Image Quality Metrics for 7T resting-state BOLD data.
+iqm.py - Image Quality Metrics for resting-state BOLD data.
 
 Computes four no-reference IQMs (following MRIQC conventions) and saves:
 
@@ -27,6 +27,7 @@ Computes four no-reference IQMs (following MRIQC conventions) and saves:
 Usage:
     python scripts/iqm.py sub-64927
     python scripts/iqm.py sub-64927 --session ses-06
+    python scripts/iqm.py sub-64927 --session ses-06 --task rest
 """
 
 import argparse
@@ -40,7 +41,7 @@ import nibabel as nib
 import numpy as np
 from nilearn import plotting
 
-from utils import REPO_ROOT, WAND_ROOT, DEFAULT_SESSION, find_bold, load_bold
+from utils import REPO_ROOT, DEFAULT_SESSION, DEFAULT_TASK, find_bold, load_bold
 
 # ── Config ────────────────────────────────────────────────────────────────────
 RESULTS_SUBDIR  = "iqm"
@@ -264,14 +265,16 @@ def plot_dvars(dvars: np.ndarray, dvars_median: float, n_spikes: int,
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(
-        description="Compute Image Quality Metrics (IQMs) for a 7T resting-state BOLD scan."
+        description="Compute Image Quality Metrics (IQMs) for a resting-state BOLD scan."
     )
     parser.add_argument("subject", help="Subject ID, e.g. sub-64927")
     parser.add_argument("--session", default=DEFAULT_SESSION,
                         help=f"Session ID (default: {DEFAULT_SESSION})")
+    parser.add_argument("--task", default=DEFAULT_TASK,
+                        help=f"Task label (default: {DEFAULT_TASK})")
     args = parser.parse_args()
 
-    bold_path = find_bold(args.subject, args.session)
+    bold_path = find_bold(args.subject, args.session, args.task)
     out_dir   = REPO_ROOT / "results" / args.subject / RESULTS_SUBDIR
     out_dir.mkdir(parents=True, exist_ok=True)
 

@@ -21,6 +21,7 @@ def test_cli_help_commands_run() -> None:
         "visualise_bold.py",
         "slice_qc.py",
         "iqm.py",
+        "validate_inputs.py",
         "group_qc.py",
         "compare_3t_7t_mriqc.py",
     ]

@@ -1,0 +1,9 @@
+name: EXAMPLE_DATASET
+data_root: data/EXAMPLE_DATASET
+results_root: results
+default_session: ses-01
+default_task: rest
+mriqc_analysis_relpath: derivatives/mriqc/analysis
+field_strength_sessions:
+  3t: ses-01
+  7t: ses-02

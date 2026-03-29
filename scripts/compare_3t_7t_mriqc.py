@@ -21,12 +21,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from utils import DEFAULT_TASK, MRIQC_ANALYSIS_DIR, REPO_ROOT, session_for_field_strength
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-MRIQC_ANALYSIS_DIR = REPO_ROOT / "data" / "WAND" / "derivatives" / "mriqc" / "analysis"
-DEFAULT_3T_SESSION = "ses-03"
-DEFAULT_7T_SESSION = "ses-06"
-DEFAULT_TASK = "rest"
+
+DEFAULT_3T_SESSION = session_for_field_strength("3t")
+DEFAULT_7T_SESSION = session_for_field_strength("7t")
 
 
 def mriqc_tsv_path(session: str, task: str) -> Path:

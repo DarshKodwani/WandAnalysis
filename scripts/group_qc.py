@@ -1,8 +1,8 @@
 """
-group_qc.py - Group-level QC analysis across all WAND subjects.
+group_qc.py - Group-level QC analysis across all processed subjects.
 
 Loads the per-subject iqm.json files from results/ and the official MRIQC
-TSV from the WAND derivatives folder, then produces summary plots to help
+TSV from the configured dataset derivatives folder, then produces summary plots to help
 identify the best subjects for fMRI analysis.
 
 Current plots
@@ -25,11 +25,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from utils import DEFAULT_TASK, MRIQC_ANALYSIS_DIR, RESULTS_ROOT, session_for_field_strength
+
 # ── Paths ─────────────────────────────────────────────────────────────────────
 REPO_ROOT   = Path(__file__).resolve().parents[1]
-RESULTS_DIR = REPO_ROOT / "results"
+RESULTS_DIR = RESULTS_ROOT
 OUT_DIR     = RESULTS_DIR / "group"
-MRIQC_TSV   = REPO_ROOT / "data" / "WAND" / "derivatives" / "mriqc" / "analysis" / "ses-06_task-rest_bold.tsv"
 
 
 # ── Data loading ──────────────────────────────────────────────────────────────
@@ -50,11 +51,12 @@ def load_all_iqm() -> list[dict]:
 
 # ── MRIQC data loading ───────────────────────────────────────────────────────
 
-def load_mriqc_tsnr() -> tuple[np.ndarray, list[str]]:
-    """Read tSNR values from the official MRIQC TSV for ses-06 resting-state BOLD."""
-    if not MRIQC_TSV.exists():
-        raise FileNotFoundError(f"MRIQC TSV not found: {MRIQC_TSV}")
-    df = pd.read_csv(MRIQC_TSV, sep="\t")
+def load_mriqc_tsnr(session: str, task: str) -> tuple[np.ndarray, list[str]]:
+    """Read tSNR values from the configured MRIQC TSV for a session/task."""
+    mriqc_tsv = MRIQC_ANALYSIS_DIR / f"{session}_task-{task}_bold.tsv"
+    if not mriqc_tsv.exists():
+        raise FileNotFoundError(f"MRIQC TSV not found: {mriqc_tsv}")
+    df = pd.read_csv(mriqc_tsv, sep="\t")
     # extract subject IDs (strip session/task suffix)
     subjects = df["bids_name"].str.split("_ses").str[0].tolist()
     tsnr = df["tsnr"].values.astype(float)
@@ -136,13 +138,13 @@ def _tsnr_hist_ax(ax, tsnr_values, title, subtitle):
     ], fontsize=7.5, loc="upper right")
 
 
-def plot_mriqc_tsnr_histogram(tsnr_values, out_dir: Path, show: bool = False):
+def plot_mriqc_tsnr_histogram(tsnr_values, session: str, task: str, out_dir: Path, show: bool = False):
     """Standalone histogram of MRIQC tSNR values."""
     fig, ax = plt.subplots(figsize=(10, 5))
     fig.suptitle("Temporal SNR (tSNR) — MRIQC / motion-corrected data",
                  fontsize=14, fontweight="bold")
     _tsnr_hist_ax(ax, tsnr_values,
-                  title="MRIQC tSNR  (ses-06 resting-state BOLD)",
+                  title=f"MRIQC tSNR  ({session} task-{task} BOLD)",
                   subtitle="Median tSNR  [MRIQC]")
     fig.tight_layout()
     out_path = out_dir / "tsnr_histogram_mriqc.png"
@@ -192,8 +194,10 @@ def plot_tsnr_comparison(raw_values, mriqc_values, out_dir: Path, show: bool = F
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Group-level QC analysis for WAND subjects.")
+    parser = argparse.ArgumentParser(description="Group-level QC analysis for processed subjects.")
     parser.add_argument("--show", action="store_true", help="Open plots interactively after saving.")
+    parser.add_argument("--session", default=session_for_field_strength("7t"), help="MRIQC session ID to load.")
+    parser.add_argument("--task", default=DEFAULT_TASK, help=f"MRIQC task label (default: {DEFAULT_TASK}).")
     args = parser.parse_args()
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -209,11 +213,11 @@ def main():
 
     # ── MRIQC tSNR ────────────────────────────────────────────────────────────
     print("Loading MRIQC tSNR data …")
-    mriqc_tsnr, mriqc_subs = load_mriqc_tsnr()
+    mriqc_tsnr, mriqc_subs = load_mriqc_tsnr(args.session, args.task)
     print(f"  Found {len(mriqc_tsnr)} subjects in MRIQC TSV.")
 
     print("Plotting MRIQC tSNR histogram …")
-    plot_mriqc_tsnr_histogram(mriqc_tsnr, OUT_DIR, show=args.show)
+    plot_mriqc_tsnr_histogram(mriqc_tsnr, args.session, args.task, OUT_DIR, show=args.show)
 
     # ── comparison ────────────────────────────────────────────────────────────
     print("Plotting comparison …")

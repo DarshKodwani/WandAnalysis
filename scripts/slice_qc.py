@@ -13,6 +13,7 @@ produces 5 plots saved to results/<subject>/slice_qc/:
 Usage:
     python scripts/slice_qc.py sub-43766
     python scripts/slice_qc.py sub-43766 --session ses-06
+    python scripts/slice_qc.py sub-43766 --session ses-06 --task rest
 """
 
 import argparse
@@ -22,7 +23,7 @@ import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
 
-from utils import REPO_ROOT, WAND_ROOT, DEFAULT_SESSION, find_bold, load_bold
+from utils import REPO_ROOT, DEFAULT_SESSION, DEFAULT_TASK, find_bold, load_bold
 
 # ── Config ────────────────────────────────────────────────────────────────────
 RESULTS_SUBDIR  = "slice_qc"
@@ -140,9 +141,11 @@ def main():
     parser.add_argument("subject", help="Subject ID, e.g. sub-43766")
     parser.add_argument("--session", default=DEFAULT_SESSION,
                         help=f"Session ID (default: {DEFAULT_SESSION})")
+    parser.add_argument("--task", default=DEFAULT_TASK,
+                        help=f"Task label (default: {DEFAULT_TASK})")
     args = parser.parse_args()
 
-    bold_path = find_bold(args.subject, args.session)
+    bold_path = find_bold(args.subject, args.session, args.task)
     out_dir   = REPO_ROOT / "results" / args.subject / RESULTS_SUBDIR
     out_dir.mkdir(parents=True, exist_ok=True)
 
