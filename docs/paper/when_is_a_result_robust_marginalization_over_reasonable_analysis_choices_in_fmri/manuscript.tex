@@ -1,0 +1,250 @@
+% ============================================================
+%  main.tex  -- Paper 1 template
+%  Compile with: pdflatex main.tex
+% ============================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[
+    top=2.5cm, bottom=2.5cm,
+    left=2.5cm, right=2.5cm
+]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage[
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+]{hyperref}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{setspace}
+\setstretch{1.15}
+
+\title{\textbf{When Is a Result Robust?}\\[0.4em]
+Marginalization Over Reasonable Analysis Choices in fMRI}
+
+\author{
+    Darsh Kodwani\\
+    \small Royal Holloway, University of London
+    \and
+    Narender Ramnani\\
+    \small Royal Holloway, University of London
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\begin{abstract}
+Functional MRI results are typically reported as though they follow directly from data, yet every reported finding depends on a chain of analysis choices. Many of these choices are reasonable, widely used, and difficult to justify uniquely, but their effects on final scientific conclusions are rarely quantified. This paper introduces the principle that a scientific result should be considered robust only if it survives marginalization over reasonable analysis choices. We formalize this idea in a Bayesian framework by treating pipeline specification as a source of model uncertainty and by separating within-pipeline uncertainty from between-pipeline uncertainty. We then instantiate this framework using resting-state functional MRI from the Welsh Advanced Neuroimaging Database, focusing on the paired 3T and 7T resting-state acquisitions and deliberately stopping at the level of the functional connectivity matrix. The aim of this first paper is to quantify how uncertainty propagates from raw BOLD data through signal cleaning, signal representation, and relationship estimation into the connectivity object itself, before higher-level assumptions about canonical networks or graph summaries are introduced. We outline a multiverse of plausible pipelines, identify the major branch points at each stage, and define robustness metrics for comparing the resulting connectivity matrices across methods and across field strengths. This paper therefore serves as both a conceptual introduction and an empirical analysis plan for a broader programme of work on scientifically robust inference in fMRI.
+\end{abstract}
+
+\newpage
+
+\section{Introduction}
+
+Scientific claims in fMRI are usually reported conditional on a single chosen pipeline, even though multiple alternative pipelines are plausible. The central thesis of this paper is that a result is only scientifically robust if it survives marginalization over reasonable analysis choices. The purpose of Paper 1 is to introduce this idea formally and to show how it can be applied in practice to resting-state fMRI.
+
+This first paper deliberately stops at the connectivity matrix. That choice is important. The connectivity matrix is the first major inferential object produced by a resting-state fMRI pipeline, and it sits before additional layers of interpretation such as canonical network assignment, graph-theoretic summaries, or behaviour association models. By focusing on this stage, we can isolate uncertainty induced by upstream analysis choices without conflating it with later representational assumptions.
+
+\section{Conceptual Framework}
+
+\subsection{Pipeline Uncertainty as Model Uncertainty}
+
+Let $y$ denote the raw imaging data, $m$ a particular analysis pipeline, and $\theta$ the scientific quantity of interest. Standard reporting conditions on a single pipeline:
+
+\begin{equation}
+    p(\theta \mid y, m).
+\end{equation}
+
+Our proposal is that robust inference should instead acknowledge uncertainty over plausible pipelines:
+
+\begin{equation}
+    p(\theta \mid y) = \sum_{m \in \mathcal{M}} p(\theta \mid y, m) \, p(m \mid y),
+\end{equation}
+
+where $\mathcal{M}$ is the set of reasonable analysis choices. In practice, this motivates a multiverse of pipelines together with explicit comparison of the resulting estimates.
+
+\subsection{Decomposing Uncertainty}
+
+The total uncertainty in the final estimate can be written as:
+
+\begin{equation}
+    \mathrm{Var}(\theta \mid y) = \mathbb{E}_{m}[\mathrm{Var}(\theta \mid y, m)] + \mathrm{Var}_{m}[\mathbb{E}(\theta \mid y, m)].
+\end{equation}
+
+The first term captures within-pipeline uncertainty. The second captures between-pipeline uncertainty. Paper 1 is primarily concerned with quantifying the second term up to the level of the connectivity matrix.
+
+\subsection{A Five-Phase View of the Analysis}
+
+We organise the full fMRI workflow into five phases:
+
+\begin{enumerate}[label=\arabic*.]
+    \item raw data to cleaned voxel time series,
+    \item cleaned voxel time series to regional representation,
+    \item regional representation to a connectivity object,
+    \item connectivity object to scientific summaries,
+    \item scientific summaries to final scientific claims.
+\end{enumerate}
+
+Paper 1 addresses Phases 1--3 and stops at the connectivity object. Paper 2 will build on this by studying Phases 4--5.
+
+\section{Dataset and Scope}
+
+\subsection{Why WAND?}
+
+The Welsh Advanced Neuroimaging Database provides an unusually strong test bed for this question because it contains paired 3T and 7T resting-state fMRI within the same broader cohort, together with rich acquisition metadata, quality-control derivatives, field maps, and physiological recordings for at least part of the 7T resting-state data. This creates a setting in which the same conceptual endpoint can be estimated under distinct acquisition regimes that differ in spatial resolution, distortion burden, and physiological noise structure.
+
+\subsection{Sessions Used in Paper 1}
+
+Paper 1 will focus on:
+
+\begin{itemize}
+    \item 3T resting-state BOLD from \texttt{ses-03}, and
+    \item 7T resting-state BOLD from \texttt{ses-06}.
+\end{itemize}
+
+The stopping point for the empirical analyses in this paper is the subject-level functional connectivity matrix derived from each pipeline.
+
+\subsection{Primary Endpoint}
+
+The primary endpoint is the estimated connectivity object, operationalised in the first instance as a parcel-by-parcel functional connectivity matrix. The key questions are:
+
+\begin{enumerate}[label=\arabic*.]
+    \item How much does the connectivity matrix vary across reasonable pipelines?
+    \item Which stages of the pipeline contribute most to that variation?
+    \item Is pipeline sensitivity larger at 7T than at 3T?
+    \item Are estimated 3T-versus-7T differences stable across pipelines?
+\end{enumerate}
+
+\section{Analysis Structure for Paper 1}
+
+\subsection{Phase 1: Signal Cleaning}
+
+This phase defines what is treated as the cleaned voxel-level signal. Candidate branch points include:
+
+\begin{itemize}
+    \item dummy-volume handling,
+    \item motion correction,
+    \item distortion correction,
+    \item masking,
+    \item registration,
+    \item nuisance regression,
+    \item temporal filtering,
+    \item censoring or scrubbing,
+    \item optional physiological regression.
+\end{itemize}
+
+The output of this phase is a cleaned voxel time series.
+
+\subsection{Phase 2: Signal Representation}
+
+This phase defines how cleaned voxel signals are represented for downstream estimation. Candidate branch points include:
+
+\begin{itemize}
+    \item voxelwise versus parcelwise representation,
+    \item atlas family,
+    \item atlas granularity,
+    \item subject-space versus template-space representation,
+    \item parcel summarisation rule such as the mean, median, or first principal component.
+\end{itemize}
+
+The output of this phase is a set of regional time series.
+
+\subsection{Phase 3: Relationship Estimation}
+
+This phase maps regional time series to a connectivity object. Candidate branch points include:
+
+\begin{itemize}
+    \item Pearson correlation,
+    \item partial correlation,
+    \item regularised precision-matrix estimates,
+    \item static versus time-varying connectivity summaries.
+\end{itemize}
+
+The initial Paper 1 endpoint will be a static parcelwise connectivity matrix, with alternative estimators introduced as the project scales.
+
+\section{Robustness Metrics}
+
+Paper 1 will compare connectivity matrices across pipelines using several complementary metrics:
+
+\begin{itemize}
+    \item matrix similarity and matrix distance,
+    \item edgewise variability across pipelines,
+    \item subject-level reproducibility,
+    \item paired 3T-versus-7T effect variation,
+    \item variance decomposition by pipeline stage.
+\end{itemize}
+
+These metrics will allow us to ask whether between-pipeline variability is small relative to the effects being interpreted, or large enough to account for them.
+
+\section{Toy Examples and Formal Intuition}
+
+This section will provide simple toy examples illustrating why a claim can appear stable within a single chosen pipeline and yet fail to be robust once alternative reasonable pipelines are considered. The goal is to make the mathematical framework intuitive before the full empirical analyses are presented.
+
+\section{Empirical Analysis Plan}
+
+\subsection{Step 1: Enumerate Reasonable Pipelines}
+
+We will define a finite set of defensible analysis choices at each branch point and construct a manageable multiverse of pipelines rather than attempting exhaustive enumeration of all possibilities.
+
+\subsection{Step 2: Estimate Subject-Level Connectivity}
+
+For each subject, field strength, and pipeline, we will estimate the connectivity matrix at the chosen representation level.
+
+\subsection{Step 3: Compare Connectivity Objects Across Pipelines}
+
+We will quantify how far connectivity estimates move as analysis choices change, both within field strength and for paired 3T-versus-7T contrasts.
+
+\subsection{Step 4: Attribute Variability to Pipeline Stages}
+
+Where possible, we will decompose total variability into contributions from signal cleaning, signal representation, and relationship estimation.
+
+\subsection{Step 5: Define Robustness Criteria}
+
+We will state explicit criteria for robustness, for example whether the spread induced by reasonable pipelines is materially smaller than the estimated effect of interest.
+
+\section{Planned Results}
+
+The planned outputs for Paper 1 are:
+
+\begin{itemize}
+    \item a conceptual and mathematical framing of analysis-choice marginalisation,
+    \item a WAND-based empirical multiverse up to the connectivity matrix,
+    \item robustness summaries for 3T and 7T connectivity estimation,
+    \item a ranking of which pipeline stages contribute most to downstream uncertainty.
+\end{itemize}
+
+\section{Discussion}
+
+The discussion will focus on three points:
+
+\begin{enumerate}[label=\arabic*.]
+    \item why stopping at the connectivity object is methodologically useful,
+    \item what constitutes a robust result at this stage of the pipeline,
+    \item how these findings motivate the follow-up paper on network discovery and network-based inference.
+\end{enumerate}
+
+\section{Relationship to Paper 2}
+
+Paper 2 will begin from the connectivity object and ask how downstream representational and inferential choices shape network discovery and network-based claims. That work will therefore build directly on the uncertainty estimates established here.
+
+\newpage
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\end{document}
