@@ -1,6 +1,6 @@
 % ============================================================
-%  main.tex  -- Paper 1 template
-%  Compile with: pdflatex main.tex
+%  manuscript.tex  -- Paper 1 template
+%  Compile with: tectonic manuscript.tex
 % ============================================================
 
 \documentclass[11pt,a4paper]{article}
@@ -19,6 +19,8 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{float}
+\usepackage{longtable}
+\usepackage{multirow}
 \usepackage{enumitem}
 \usepackage[
     colorlinks=true,
@@ -31,7 +33,7 @@
 \setstretch{1.15}
 
 \title{\textbf{When Is a Result Robust?}\\[0.4em]
-Marginalization Over Reasonable Analysis Choices in fMRI}
+A Multiverse Sensitivity Analysis of Preprocessing Choices in Resting-State fMRI}
 
 \author{
     Darsh Kodwani\\
@@ -50,201 +52,886 @@ Marginalization Over Reasonable Analysis Choices in fMRI}
 \newpage
 
 \begin{abstract}
-Functional MRI results are typically reported as though they follow directly from data, yet every reported finding depends on a chain of analysis choices. Many of these choices are reasonable, widely used, and difficult to justify uniquely, but their effects on final scientific conclusions are rarely quantified. This paper introduces the principle that a scientific result should be considered robust only if it survives marginalization over reasonable analysis choices. We formalize this idea in a Bayesian framework by treating pipeline specification as a source of model uncertainty and by separating within-pipeline uncertainty from between-pipeline uncertainty. We then instantiate this framework using resting-state functional MRI from the Welsh Advanced Neuroimaging Database, focusing on the paired 3T and 7T resting-state acquisitions and deliberately stopping at the level of the functional connectivity matrix. The aim of this first paper is to quantify how uncertainty propagates from raw BOLD data through signal cleaning, signal representation, and relationship estimation into the connectivity object itself, before higher-level assumptions about canonical networks or graph summaries are introduced. We outline a multiverse of plausible pipelines, identify the major branch points at each stage, and define robustness metrics for comparing the resulting connectivity matrices across methods and across field strengths. This paper therefore serves as both a conceptual introduction and an empirical analysis plan for a broader programme of work on scientifically robust inference in fMRI.
+Every functional MRI finding depends on a chain of preprocessing decisions---motion correction algorithm, distortion-correction strategy, smoothing kernel, nuisance-regression model, parcellation atlas, connectivity estimator---yet results are almost always reported as though only one defensible pipeline exists. We argue that a result should be considered robust only if it survives systematic variation over reasonable analysis choices. To test this empirically, we construct a multiverse of 195 complete preprocessing pipelines organised around three widely-used software ecosystems (FSL, SPM, and fMRIPrep). Each ecosystem defines a canonical default pipeline spanning nine sequential steps from raw BOLD data to a functional connectivity (FC) matrix. From each default we generate 64 one-at-a-time (OAT) perturbations, each changing exactly one parameter while holding the remaining eight steps fixed. We apply all 195 pipelines to 170 subjects from the Welsh Advanced Neuroimaging Database (WAND), exploiting its paired 3\,T and 7\,T resting-state acquisitions to ask whether preprocessing sensitivity differs across field strengths. At every step we record a local quality metric (e.g.\ framewise displacement for motion correction, Dice overlap for normalisation, QC--FC correlation for nuisance regression) alongside four global FC-level metrics: matrix correlation with a reference, fingerprinting accuracy, 3\,T-versus-7\,T discriminability, and network modularity. This two-level measurement strategy lets us identify cases where a variant improves its own step-level metric yet degrades the final connectivity estimate---a phenomenon we term the \emph{local-win / global-loss paradox}. The analysis deliberately stops at the FC matrix; a companion paper will examine how downstream network-discovery and inference choices further modulate scientific conclusions.
 \end{abstract}
 
 \newpage
 
 \section{Introduction}
 
-Scientific claims in fMRI are usually reported conditional on a single chosen pipeline, even though multiple alternative pipelines are plausible. The central thesis of this paper is that a result is only scientifically robust if it survives marginalization over reasonable analysis choices. The purpose of Paper 1 is to introduce this idea formally and to show how it can be applied in practice to resting-state fMRI.
+\subsection{The hidden dependency on analysis choices}
 
-This first paper deliberately stops at the connectivity matrix. That choice is important. The connectivity matrix is the first major inferential object produced by a resting-state fMRI pipeline, and it sits before additional layers of interpretation such as canonical network assignment, graph-theoretic summaries, or behaviour association models. By focusing on this stage, we can isolate uncertainty induced by upstream analysis choices without conflating it with later representational assumptions.
+A typical resting-state fMRI study reports brain connectivity as though the result follows inevitably from the data.  In practice, the path from a raw BOLD time-series to a functional connectivity (FC) matrix passes through at least nine sequential preprocessing steps---motion correction, slice-timing correction, distortion correction, spatial normalisation, smoothing, temporal filtering, nuisance regression, parcellation, and connectivity estimation---each of which admits multiple defensible algorithmic choices.  A researcher using FSL will default to MCFLIRT for motion correction, FNIRT for normalisation, and SUSAN for smoothing; a researcher using SPM will instead default to SPM~Realign, DARTEL, and a Gaussian kernel; a researcher using fMRIPrep will inherit yet another set of defaults built around ANTs~SyN and ICA-AROMA.  All three choices are reasonable, widely published, and impossible to justify uniquely on first principles.
+
+The consequence is that every reported FC matrix is implicitly conditioned on a particular chain of choices, and the sensitivity of the result to those choices is almost never quantified.  Two studies analysing the same raw data can reach different connectivity conclusions simply because they chose different software ecosystems---not because the underlying neuroscience differs.
+
+\subsection{Multiverse analysis as a solution}
+
+The \emph{multiverse} approach \citep{steegen2016} addresses this problem by enumerating a set of defensible analysis specifications, running all of them on the same data, and examining the spread of outcomes.  A result that is stable across the multiverse is considered robust; a result that depends critically on a particular specification is fragile.  The related \emph{specification curve} \citep{simonsohn2020} provides a visual summary by sorting all specifications by effect size and overlaying a significance band.
+
+In neuroimaging, \citet{botvinik2020} introduced the term \emph{analytic flexibility} and demonstrated that 70 independent analysis teams given identical fMRI data reached substantially different conclusions.  \citet{ciric2017} showed that the choice of confound-regression strategy alone can reverse the sign of motion--connectivity relationships.  \citet{parkes2018} extended this to show that pipeline choice interacts with sample characteristics.  These findings motivate a systematic, controlled multiverse study in which every branch point is varied one at a time from a well-defined starting configuration.
+
+\subsection{Why ecosystem-anchored pipelines?}
+
+A na\"ive multiverse would enumerate all possible combinations of choices across all nine steps, producing millions of pipelines---computationally intractable and scientifically uninterpretable.  Instead, we adopt an \emph{ecosystem-anchored} design.  We define three complete default pipelines corresponding to the three dominant fMRI software ecosystems: FSL, SPM, and fMRIPrep.  From each default, we apply a one-at-a-time (OAT) perturbation scheme, changing exactly one parameter per variant while holding the remaining eight steps fixed.  This yields 64 perturbations per ecosystem plus the default itself, for a total of $3 \times 65 = 195$ pipeline configurations.
+
+This design has three advantages.  First, it mirrors real-world practice: researchers typically commit to one ecosystem rather than mixing tools across packages.  Second, it provides three independent OAT sweeps anchored at different starting points, making the sensitivity analysis robust to the choice of default.  Third, it keeps the total number of pipelines tractable: 195 configurations applied to 170 subjects at two field strengths gives 66\,300 runs, feasible on a modest compute cluster with step-level output caching.
+
+\subsection{Scope of this paper}
+
+This paper deliberately stops at the FC matrix.  The connectivity matrix is the first major inferential object produced by a resting-state pipeline, and it sits upstream of additional interpretive layers such as network discovery, graph-theoretic summaries, or brain--behaviour association models.  By drawing the boundary here, we can isolate the uncertainty induced by preprocessing and connectivity-estimation choices without conflating it with downstream representational assumptions.  A companion paper will examine how those downstream choices further modulate scientific conclusions, building directly on the pipeline-uncertainty estimates established here.
 
 \section{Conceptual Framework}
 
-\subsection{Pipeline Uncertainty as Model Uncertainty}
+\subsection{Multiverse and specification-curve framing}
 
-Let $y$ denote the raw imaging data, $m$ a particular analysis pipeline, and $\theta$ the scientific quantity of interest. Standard reporting conditions on a single pipeline:
-
+Let $\mathcal{M} = \{m_1, m_2, \ldots, m_K\}$ denote a set of $K$ defensible preprocessing pipelines. For a given subject $s$ and field strength $f$, each pipeline $m_k$ produces a deterministic FC matrix:
+%
 \begin{equation}
-    p(\theta \mid y, m).
+    \mathbf{C}_{s,f}^{(k)} = m_k\!\bigl(\mathbf{Y}_{s,f}\bigr),
 \end{equation}
+%
+where $\mathbf{Y}_{s,f}$ is the raw 4-D BOLD data. The multiverse is the collection $\{\mathbf{C}_{s,f}^{(k)}\}_{k=1}^{K}$ for all subjects, field strengths, and pipelines. A scientific claim is \emph{robust} if it holds across the multiverse, and \emph{fragile} if it depends critically on the choice of $k$.
 
-Our proposal is that robust inference should instead acknowledge uncertainty over plausible pipelines:
+Note that individual preprocessing pipelines are deterministic: given the same input, the same pipeline always produces the same FC matrix. There is no stochastic model inside MCFLIRT or FNIRT that would produce a posterior distribution. The variability we study is therefore entirely \emph{between-pipeline}, not within-pipeline.
 
-\begin{equation}
-    p(\theta \mid y) = \sum_{m \in \mathcal{M}} p(\theta \mid y, m) \, p(m \mid y),
+\subsection{Variance decomposition}
+
+To quantify which factors contribute most to variability in the FC matrix, we decompose the total variance of any scalar summary $\theta$ (e.g.\ a single edge weight, mean fingerprinting accuracy, or network modularity) using an ANOVA-style partition:
+%
+\begin{equation}\label{eq:anova}
+    \mathrm{Var}_{\mathrm{total}}(\theta) \;=\; \underbrace{\mathrm{Var}_{\mathrm{pipeline}}}_{\text{between-pipeline}} \;+\; \underbrace{\mathrm{Var}_{\mathrm{subject}}}_{\text{between-subject}} \;+\; \underbrace{\mathrm{Var}_{\mathrm{interaction}}}_{\text{pipeline} \times \text{subject}} \;+\; \underbrace{\mathrm{Var}_{\mathrm{field\;strength}}}_{\text{3T vs 7T}}.
 \end{equation}
+%
+The between-pipeline term is the object of primary interest: it captures how much the output moves when analysis choices change. The between-subject term captures genuine neurobiological variation. The interaction term captures cases where a pipeline choice matters more for some subjects than others (for example, aggressive scrubbing may disproportionately affect high-motion subjects). The field-strength term captures systematic differences between 3\,T and 7\,T acquisitions.
 
-where $\mathcal{M}$ is the set of reasonable analysis choices. In practice, this motivates a multiverse of pipelines together with explicit comparison of the resulting estimates.
+A preprocessing step is ``high-sensitivity'' if perturbing it produces a large between-pipeline variance relative to the between-subject variance.  A step is ``low-sensitivity'' if its perturbations barely move the output.  This ranking---which steps matter most---is the headline result of the OAT analysis.
 
-\subsection{Decomposing Uncertainty}
+\subsection{The local-win / global-loss paradox}
+\label{sec:paradox}
 
-The total uncertainty in the final estimate can be written as:
+A critical subtlety is that \emph{improving a step's own quality metric does not guarantee improvement in the final FC matrix}.  For example, increasing the smoothing kernel from 4\,mm to 8\,mm will reliably increase temporal signal-to-noise ratio (tSNR)---the natural local metric for smoothing---yet the additional blurring smears signal across parcel boundaries, inflating short-range correlations and degrading the FC matrix.  We term this the \emph{local-win / global-loss paradox}.  It arises because the nine steps form a coupled system: each step's output is the next step's input, and local optimisation at one stage can propagate errors downstream.
 
-\begin{equation}
-    \mathrm{Var}(\theta \mid y) = \mathbb{E}_{m}[\mathrm{Var}(\theta \mid y, m)] + \mathrm{Var}_{m}[\mathbb{E}(\theta \mid y, m)].
-\end{equation}
-
-The first term captures within-pipeline uncertainty. The second captures between-pipeline uncertainty. Paper 1 is primarily concerned with quantifying the second term up to the level of the connectivity matrix.
-
-\subsection{A Five-Phase View of the Analysis}
-
-We organise the full fMRI workflow into five phases:
-
-\begin{enumerate}[label=\arabic*.]
-    \item raw data to cleaned voxel time series,
-    \item cleaned voxel time series to regional representation,
-    \item regional representation to a connectivity object,
-    \item connectivity object to scientific summaries,
-    \item scientific summaries to final scientific claims.
-\end{enumerate}
-
-Paper 1 addresses Phases 1--3 and stops at the connectivity object. Paper 2 will build on this by studying Phases 4--5.
+To detect such paradoxes, we measure both a \emph{local metric} specific to each step (see Section~\ref{sec:local_metrics}) and a set of \emph{global metrics} computed on the final FC matrix (see Section~\ref{sec:global_metrics}).  A variant that improves its local metric but degrades a global metric is a concrete instance of the paradox.
 
 \section{Dataset and Scope}
 
+\subsection{The Welsh Advanced Neuroimaging Database (WAND)}
+
+The WAND dataset \citep{wand2024} comprises 170 healthy volunteers scanned at the Cardiff University Brain Research Imaging Centre (CUBRIC).  Each participant underwent multiple sessions, including resting-state fMRI at both 3\,T and 7\,T, providing a within-cohort comparison of two field strengths with markedly different acquisition physics.  The data are organised in BIDS format and include structural scans, field maps, and physiological recordings for a subset of the 7\,T sessions.
+
+\subsection{Acquisition parameters}
+
+\paragraph{3\,T resting-state BOLD (\texttt{ses-03}).}
+Acquired on a Siemens Prisma with a 32-channel head coil.  TR\,=\,2.0\,s, TE\,=\,30\,ms, flip angle\,=\,90\textdegree, 64 slices, 2\,mm slice thickness (2.5\,mm spacing), $96 \times 96$ matrix, multiband factor\,=\,4, interleaved acquisition, GRAPPA $2\times$, phase-encoding direction $j{-}$.
+
+\paragraph{7\,T resting-state BOLD (\texttt{ses-06}).}
+Acquired on a Siemens Magnetom 7\,T with a 32-channel Nova Medical coil.  TR\,=\,1.5\,s, TE\,=\,25\,ms, 100 slices, 1.5\,mm isotropic, $128 \times 128$ matrix, flip angle\,=\,60\textdegree, multiband factor\,=\,4, interleaved acquisition, GRAPPA $2\times$, phase-encoding direction $j{-}$, total readout time\,=\,0.0457\,s.
+
+\paragraph{Anatomical scans.}
+3\,T: MPRAGE, 1\,mm isotropic, $256 \times 256 \times 224$, TE\,=\,3.24\,ms, TR\,=\,2.1\,s, TI\,=\,0.85\,s, flip angle\,=\,8\textdegree.  7\,T: MP2RAGE (PSIR reconstruction), 0.7\,mm isotropic, $320 \times 320 \times 288$, TE\,=\,2.64\,ms, TR\,=\,3.5\,s, TI\,=\,0.725\,s, flip angle\,=\,5\textdegree, GRAPPA $3\times$.
+
+\paragraph{Field maps.}
+3\,T: dual-echo GRE phase-difference (TE$_1$\,=\,4.92\,ms, TE$_2$\,=\,7.38\,ms), originally targeted at the ASL acquisition rather than BOLD.  7\,T: GRE phase-difference (TE$_1$\,=\,4.08\,ms, TE$_2$\,=\,5.10\,ms) plus reverse phase-encoding spin-echo blips (AP/PA, TE\,=\,45\,ms, 1.5\,mm isotropic, MB4) and a B1 transmit map---all targeting the BOLD acquisition.  This asymmetry means that field-map-based distortion correction is straightforward at 7\,T but requires care at 3\,T, providing a natural test of how distortion-correction strategy interacts with field strength.
+
 \subsection{Why WAND?}
 
-The Welsh Advanced Neuroimaging Database provides an unusually strong test bed for this question because it contains paired 3T and 7T resting-state fMRI within the same broader cohort, together with rich acquisition metadata, quality-control derivatives, field maps, and physiological recordings for at least part of the 7T resting-state data. This creates a setting in which the same conceptual endpoint can be estimated under distinct acquisition regimes that differ in spatial resolution, distortion burden, and physiological noise structure.
-
-\subsection{Sessions Used in Paper 1}
-
-Paper 1 will focus on:
-
-\begin{itemize}
-    \item 3T resting-state BOLD from \texttt{ses-03}, and
-    \item 7T resting-state BOLD from \texttt{ses-06}.
-\end{itemize}
-
-The stopping point for the empirical analyses in this paper is the subject-level functional connectivity matrix derived from each pipeline.
-
-\subsection{Primary Endpoint}
-
-The primary endpoint is the estimated connectivity object, operationalised in the first instance as a parcel-by-parcel functional connectivity matrix. The key questions are:
-
-\begin{enumerate}[label=\arabic*.]
-    \item How much does the connectivity matrix vary across reasonable pipelines?
-    \item Which stages of the pipeline contribute most to that variation?
-    \item Is pipeline sensitivity larger at 7T than at 3T?
-    \item Are estimated 3T-versus-7T differences stable across pipelines?
+Three features make WAND particularly well suited to a multiverse study:
+\begin{enumerate}[label=(\roman*)]
+    \item \textbf{Paired field strengths.}  The same cohort scanned at 3\,T and 7\,T allows us to ask whether preprocessing sensitivity differs across acquisition regimes that have very different spatial resolution, distortion burden, and physiological noise structure.
+    \item \textbf{Sample size.}  With 170 subjects, we have sufficient power to estimate between-subject variance and subject$\times$pipeline interactions, rather than relying on a handful of exemplar subjects.
+    \item \textbf{Rich auxiliary data.}  Field maps, high-resolution anatomicals at both field strengths, and physiological recordings provide the inputs needed by the full range of preprocessing variants (e.g.\ TOPUP requires reverse-PE blips; physiological regression requires pulse-oximetry data).
 \end{enumerate}
 
-\section{Analysis Structure for Paper 1}
+\subsection{Primary research questions}
 
-\subsection{Phase 1: Signal Cleaning}
+The primary endpoint is the subject-level parcel-by-parcel FC matrix.  The four research questions addressed by this paper are:
+\begin{enumerate}[label=\arabic*.]
+    \item How much does the FC matrix vary across the 195 pipeline configurations?
+    \item Which of the nine preprocessing steps contributes most to that variation?
+    \item Is pipeline sensitivity larger at 7\,T than at 3\,T?
+    \item Are estimated 3\,T-versus-7\,T differences stable across pipelines, or do they depend on the analysis specification?
+\end{enumerate}
 
-This phase defines what is treated as the cleaned voxel-level signal. Candidate branch points include:
+\section{Methodology}
 
-\begin{itemize}
-    \item dummy-volume handling,
-    \item motion correction,
-    \item distortion correction,
-    \item masking,
-    \item registration,
-    \item nuisance regression,
-    \item temporal filtering,
-    \item censoring or scrubbing,
-    \item optional physiological regression.
-\end{itemize}
+\subsection{The nine-step pipeline}
 
-The output of this phase is a cleaned voxel time series.
+We decompose the path from raw BOLD data to an FC matrix into nine sequential steps.  Table~\ref{tab:nine_steps} provides a summary; detailed descriptions, mathematical formulations, and literature context for each step are given in Appendix~\ref{app:steps}.
 
-\subsection{Phase 2: Signal Representation}
+\begin{table}[H]
+\centering
+\caption{The nine preprocessing steps from raw BOLD to FC matrix.}
+\label{tab:nine_steps}
+\begin{tabular}{@{}clll@{}}
+\toprule
+\# & Step & Abbreviation & Output \\
+\midrule
+1 & Motion Correction       & MC     & Realigned 4-D BOLD \\
+2 & Slice-Timing Correction & STC    & Temporally aligned 4-D BOLD \\
+3 & Distortion Correction   & SDC    & Geometrically corrected 4-D BOLD \\
+4 & Spatial Normalisation   & NORM   & BOLD in standard (MNI) space \\
+5 & Spatial Smoothing       & SMOOTH & Spatially smoothed 4-D BOLD \\
+6 & Temporal Filtering      & FILT   & Band-limited voxel time-series \\
+7 & Nuisance Regression     & REG    & Cleaned voxel time-series \\
+8 & Parcellation            & PARC   & Regional (parcel) time-series \\
+9 & Connectivity Metric     & METRIC & $P \times P$ FC matrix \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-This phase defines how cleaned voxel signals are represented for downstream estimation. Candidate branch points include:
+Each step takes the output of the previous step as input; the final output is a symmetric $P \times P$ functional connectivity matrix, where $P$ is the number of parcels.  Figure~\ref{fig:workflow} illustrates the three ecosystem default pipelines side by side, showing the specific tool and settings used at each step.
 
-\begin{itemize}
-    \item voxelwise versus parcelwise representation,
-    \item atlas family,
-    \item atlas granularity,
-    \item subject-space versus template-space representation,
-    \item parcel summarisation rule such as the mean, median, or first principal component.
-\end{itemize}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{workflow_diagram.pdf}
+\caption{The three ecosystem default pipelines.  Each column shows the tool and settings used at each of the nine preprocessing steps.  Colour coding: blue = FSL, red = SPM, green = fMRIPrep.  From each default, 64 one-at-a-time perturbations are generated (see Tables~\ref{tab:fsl_variants}--\ref{tab:fmriprep_variants}).}
+\label{fig:workflow}
+\end{figure}
 
-The output of this phase is a set of regional time series.
+\subsection{Naming convention}
+\label{sec:naming}
 
-\subsection{Phase 3: Relationship Estimation}
+Every pipeline configuration is identified by a code of the form
+\[
+    \texttt{ECOSYSTEM.STEP.N}
+\]
+where \texttt{ECOSYSTEM} $\in \{\texttt{FSL},\, \texttt{SPM},\, \texttt{FMRIPREP}\}$, \texttt{STEP} is the abbreviation from Table~\ref{tab:nine_steps}, and \texttt{N} is an integer indexing the perturbation within that ecosystem.  The three unperturbed default pipelines are denoted \texttt{FSL.DEFAULT}, \texttt{SPM.DEFAULT}, and \texttt{FMRIPREP.DEFAULT}.
 
-This phase maps regional time series to a connectivity object. Candidate branch points include:
+Variant numbers are \emph{ecosystem-relative}: \texttt{FSL.MC.3} and \texttt{SPM.MC.3} may refer to different algorithmic swaps, because each perturbation is defined relative to that ecosystem's own default.  The complete mapping from variant codes to concrete algorithmic changes is given in Tables~\ref{tab:fsl_variants}--\ref{tab:fmriprep_variants}.
 
-\begin{itemize}
-    \item Pearson correlation,
-    \item partial correlation,
-    \item regularised precision-matrix estimates,
-    \item static versus time-varying connectivity summaries.
-\end{itemize}
+\subsection{One-at-a-time (OAT) perturbation design}
+\label{sec:oat}
 
-The initial Paper 1 endpoint will be a static parcelwise connectivity matrix, with alternative estimators introduced as the project scales.
+A full-factorial enumeration of all possible combinations of choices across nine steps would produce millions of pipelines.  Instead, we adopt a one-at-a-time (OAT) sensitivity design: from each ecosystem default, we perturb exactly one step at a time, holding the other eight at their default settings.  This yields 64 perturbations per ecosystem (MC: 6, STC: 7, SDC: 6, NORM: 7, SMOOTH: 6, FILT: 6, REG: 10, PARC: 9, METRIC: 7), plus the default itself, for 65 configurations per ecosystem and $3 \times 65 = 195$ total.
 
-\section{Robustness Metrics}
+The OAT design has a well-known limitation: results can depend on the choice of default.  We mitigate this by running three independent OAT sweeps from three different starting points (FSL, SPM, fMRIPrep).  If a step shows high sensitivity in all three sweeps, we can be confident the finding is not an artefact of the particular default.
 
-Paper 1 will compare connectivity matrices across pipelines using several complementary metrics:
+\subsection{Computational considerations}
 
-\begin{itemize}
-    \item matrix similarity and matrix distance,
-    \item edgewise variability across pipelines,
-    \item subject-level reproducibility,
-    \item paired 3T-versus-7T effect variation,
-    \item variance decomposition by pipeline stage.
-\end{itemize}
+Each of the 195 configurations is applied to all 170 subjects at both field strengths, giving $195 \times 170 \times 2 = 66{,}300$ pipeline runs in total.  However, because the OAT design changes only one step per perturbation, we can cache step-level outputs and reuse them across configurations.  For example, the motion-correction output is reused by all 58 perturbations that do not alter the MC step within a given ecosystem.  With this caching strategy, the effective compute cost is approximately 760 CPU-hours, feasible within roughly 12 hours on a 64-core cluster.
 
-These metrics will allow us to ask whether between-pipeline variability is small relative to the effects being interpreted, or large enough to account for them.
+\subsection{Local metrics}
+\label{sec:local_metrics}
 
-\section{Toy Examples and Formal Intuition}
+Each preprocessing step has a natural quality metric that measures how well it accomplished its intended goal.  We term these \emph{local metrics} because they assess a single step in isolation, without reference to the final FC matrix.  Table~\ref{tab:local_metrics} lists the local metric for each step.
 
-This section will provide simple toy examples illustrating why a claim can appear stable within a single chosen pipeline and yet fail to be robust once alternative reasonable pipelines are considered. The goal is to make the mathematical framework intuitive before the full empirical analyses are presented.
+\begin{table}[H]
+\centering
+\caption{Local (step-specific) quality metrics.}
+\label{tab:local_metrics}
+\begin{tabular}{@{}cll@{}}
+\toprule
+Step & Abbreviation & Local Metric \\
+\midrule
+1 & MC     & Mean framewise displacement (FD), DVARS, post-MC tSNR \\
+2 & STC    & Temporal SNR (tSNR), spectral power in BOLD band \\
+3 & SDC    & Dice overlap of EPI brain mask with T1w, mutual information \\
+4 & NORM   & Dice overlap with MNI tissue priors, Jacobian determinant stats \\
+5 & SMOOTH & tSNR, effective smoothness (FWHM), within-parcel homogeneity \\
+6 & FILT   & Power spectral density in passband, variance ratio (BOLD/total) \\
+7 & REG    & QC--FC correlation, distance-dependent artefact, degrees of freedom lost \\
+8 & PARC   & Within-parcel homogeneity, between-parcel contrast, brain coverage \\
+9 & METRIC & Test--retest ICC, fingerprinting accuracy, matrix rank \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\section{Empirical Analysis Plan}
+\subsection{Global metrics}
+\label{sec:global_metrics}
 
-\subsection{Step 1: Enumerate Reasonable Pipelines}
+In addition to local metrics, every pipeline configuration produces a final FC matrix from which we compute four \emph{global metrics} that assess the downstream scientific utility of the entire pipeline:
 
-We will define a finite set of defensible analysis choices at each branch point and construct a manageable multiverse of pipelines rather than attempting exhaustive enumeration of all possibilities.
+\begin{enumerate}[label=(\roman*)]
+    \item \textbf{FC matrix correlation.}  Pearson correlation between the upper triangle of a variant's FC matrix and the corresponding ecosystem default's FC matrix, averaged across subjects.  Measures how much the FC estimate moved.
+    \item \textbf{Fingerprinting accuracy.}  The proportion of subjects for whom the FC matrix from session~1 is most similar (by Pearson correlation) to their own FC matrix from session~2, rather than to any other subject's matrix \citep{finn2015}.  Measures individual identifiability.
+    \item \textbf{3\,T / 7\,T discriminability.}  Accuracy of a linear classifier (or rank-based statistic) in distinguishing 3\,T from 7\,T FC matrices.  Measures whether the field-strength signal survives preprocessing.
+    \item \textbf{Network modularity ($Q$).}  The Newman--Girvan modularity of the group-average FC matrix under Louvain community detection \citep{rubinov2010}.  Measures whether the pipeline preserves large-scale network structure.
+\end{enumerate}
 
-\subsection{Step 2: Estimate Subject-Level Connectivity}
+A variant that improves its local metric but degrades one or more global metrics is a concrete instance of the local-win / global-loss paradox described in Section~\ref{sec:paradox}.
 
-For each subject, field strength, and pipeline, we will estimate the connectivity matrix at the chosen representation level.
+%% === ECOSYSTEM VARIANT TABLES ===
 
-\subsection{Step 3: Compare Connectivity Objects Across Pipelines}
+\subsection{Ecosystem default pipelines}
 
-We will quantify how far connectivity estimates move as analysis choices change, both within field strength and for paired 3T-versus-7T contrasts.
+Table~\ref{tab:defaults} summarises the default configuration for each ecosystem.
 
-\subsection{Step 4: Attribute Variability to Pipeline Stages}
+\begin{table}[H]
+\centering
+\small
+\caption{Default pipeline settings for each ecosystem.}
+\label{tab:defaults}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Step & FSL.DEFAULT & SPM.DEFAULT & FMRIPREP.DEFAULT \\
+\midrule
+MC     & MCFLIRT, ref=mid, normcorr    & SPM Realign, ref=first, LSQ    & MCFLIRT, ref=mid, normcorr \\
+STC    & slicetimer, sinc, ref=mid     & SPM STC, Fourier, ref=mid      & Fourier, ref=0.5 (mid-TR) \\
+SDC    & FUGUE (3T) / TOPUP (7T)       & SPM FieldMap / VDM              & TOPUP (7T) / SyN-SDC (3T) \\
+NORM   & FLIRT+FNIRT $\to$ MNI152 2mm  & DARTEL $\to$ MNI152             & ANTs SyN $\to$ MNI152NLin2009c \\
+SMOOTH & SUSAN 6\,mm                    & Gaussian 8\,mm                   & None (0\,mm) \\
+FILT   & Butterworth 0.01--0.1\,Hz      & Butterworth 0.01--0.1\,Hz       & None (post-processing) \\
+REG    & 6P + WM/CSF mean (8P)         & 24P Friston + WM/CSF            & aCompCor + ICA-AROMA \\
+PARC   & Schaefer 200, mean            & AAL3, mean                      & Schaefer 200, mean \\
+METRIC & Pearson + Fisher-$z$          & Pearson + Fisher-$z$            & Pearson + Fisher-$z$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-Where possible, we will decompose total variability into contributions from signal cleaning, signal representation, and relationship estimation.
+\subsection{FSL perturbations}
 
-\subsection{Step 5: Define Robustness Criteria}
+\begin{longtable}{@{}llll@{}}
+\caption{All 64 OAT perturbations from FSL.DEFAULT.  Each row changes exactly one parameter.}\label{tab:fsl_variants}\\
+\toprule
+Code & Step & What changes & Local metric \\
+\midrule
+\endfirsthead
+\multicolumn{4}{@{}l}{\textit{Table~\ref{tab:fsl_variants} continued}}\\
+\toprule
+Code & Step & What changes & Local metric \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+FSL.MC.1  & MC & ref $\to$ mean                & FD, DVARS \\
+FSL.MC.2  & MC & ref $\to$ first               & FD, DVARS \\
+FSL.MC.3  & MC & cost $\to$ mutualinfo          & FD, DVARS \\
+FSL.MC.4  & MC & cost $\to$ leastsq             & FD, DVARS \\
+FSL.MC.5  & MC & tool $\to$ 3dvolreg (AFNI)     & FD, DVARS \\
+FSL.MC.6  & MC & tool $\to$ SPM Realign         & FD, DVARS \\
+\midrule
+FSL.STC.1 & STC & skip STC entirely            & tSNR \\
+FSL.STC.2 & STC & ref $\to$ first slice         & tSNR \\
+FSL.STC.3 & STC & STC before MC (order swap)   & tSNR \\
+FSL.STC.4 & STC & tool $\to$ SPM (Fourier)     & tSNR \\
+FSL.STC.5 & STC & interp $\to$ linear          & tSNR \\
+FSL.STC.6 & STC & interp $\to$ spline          & tSNR \\
+FSL.STC.7 & STC & ref $\to$ last slice          & tSNR \\
+\midrule
+FSL.SDC.1 & SDC & skip SDC entirely            & Dice w/ T1w \\
+FSL.SDC.2 & SDC & tool $\to$ TOPUP (both)      & Dice w/ T1w \\
+FSL.SDC.3 & SDC & tool $\to$ SyN-SDC           & Dice w/ T1w \\
+FSL.SDC.4 & SDC & tool $\to$ 3dQwarp (AFNI)    & Dice w/ T1w \\
+FSL.SDC.5 & SDC & tool $\to$ SPM FieldMap      & Dice w/ T1w \\
+FSL.SDC.6 & SDC & SDC before MC (order swap)   & Dice w/ T1w \\
+\midrule
+FSL.NORM.1 & NORM & tool $\to$ ANTs SyN         & Dice w/ MNI \\
+FSL.NORM.2 & NORM & tool $\to$ DARTEL (SPM)     & Dice w/ MNI \\
+FSL.NORM.3 & NORM & strategy $\to$ direct        & Dice w/ MNI \\
+FSL.NORM.4 & NORM & template $\to$ study-specific & Dice w/ MNI \\
+FSL.NORM.5 & NORM & tool $\to$ FreeSurfer        & Dice w/ MNI \\
+FSL.NORM.6 & NORM & template $\to$ NLin2009cAsym & Dice w/ MNI \\
+FSL.NORM.7 & NORM & tool $\to$ SPM Normalise     & Dice w/ MNI \\
+\midrule
+FSL.SMOOTH.1 & SMOOTH & FWHM $\to$ 0\,mm (none)  & tSNR, homog. \\
+FSL.SMOOTH.2 & SMOOTH & FWHM $\to$ 2\,mm          & tSNR, homog. \\
+FSL.SMOOTH.3 & SMOOTH & FWHM $\to$ 4\,mm          & tSNR, homog. \\
+FSL.SMOOTH.4 & SMOOTH & FWHM $\to$ 8\,mm          & tSNR, homog. \\
+FSL.SMOOTH.5 & SMOOTH & kernel $\to$ Gaussian      & tSNR, homog. \\
+FSL.SMOOTH.6 & SMOOTH & surface-based              & tSNR, homog. \\
+\midrule
+FSL.FILT.1 & FILT & band $\to$ 0.008--0.09\,Hz   & PSD, var.\ ratio \\
+FSL.FILT.2 & FILT & band $\to$ 0.01--0.08\,Hz    & PSD, var.\ ratio \\
+FSL.FILT.3 & FILT & HP only (0.01\,Hz)            & PSD, var.\ ratio \\
+FSL.FILT.4 & FILT & skip filtering                & PSD, var.\ ratio \\
+FSL.FILT.5 & FILT & method $\to$ DCT              & PSD, var.\ ratio \\
+FSL.FILT.6 & FILT & method $\to$ Fourier notch    & PSD, var.\ ratio \\
+\midrule
+FSL.REG.1  & REG & strategy $\to$ 6P only        & QC--FC corr. \\
+FSL.REG.2  & REG & strategy $\to$ 24P Friston    & QC--FC corr. \\
+FSL.REG.3  & REG & strategy $\to$ 36P            & QC--FC corr. \\
+FSL.REG.4  & REG & strategy $\to$ aCompCor (5)   & QC--FC corr. \\
+FSL.REG.5  & REG & strategy $\to$ ICA-AROMA      & QC--FC corr. \\
+FSL.REG.6  & REG & add GSR                       & QC--FC corr. \\
+FSL.REG.7  & REG & scrub FD $> 0.5$\,mm          & QC--FC corr. \\
+FSL.REG.8  & REG & scrub FD $> 0.2$\,mm          & QC--FC corr. \\
+FSL.REG.9  & REG & scrub $\to$ spike regressors  & QC--FC corr. \\
+FSL.REG.10 & REG & aCompCor + ICA-AROMA          & QC--FC corr. \\
+\midrule
+FSL.PARC.1  & PARC & atlas $\to$ Schaefer 100    & Homogeneity \\
+FSL.PARC.2  & PARC & atlas $\to$ Schaefer 400    & Homogeneity \\
+FSL.PARC.3  & PARC & atlas $\to$ Schaefer 1000   & Homogeneity \\
+FSL.PARC.4  & PARC & atlas $\to$ Glasser 360     & Homogeneity \\
+FSL.PARC.5  & PARC & atlas $\to$ AAL3            & Homogeneity \\
+FSL.PARC.6  & PARC & atlas $\to$ Desikan-Killiany & Homogeneity \\
+FSL.PARC.7  & PARC & atlas $\to$ Gordon 333      & Homogeneity \\
+FSL.PARC.8  & PARC & atlas $\to$ Craddock 200    & Homogeneity \\
+FSL.PARC.9  & PARC & extraction $\to$ eigenvariate & Homogeneity \\
+\midrule
+FSL.METRIC.1 & METRIC & Fisher-$z$ $\to$ off     & ICC, fingerprint \\
+FSL.METRIC.2 & METRIC & partial correlation       & ICC, fingerprint \\
+FSL.METRIC.3 & METRIC & L2-regularised partial    & ICC, fingerprint \\
+FSL.METRIC.4 & METRIC & L1 sparse inverse cov.    & ICC, fingerprint \\
+FSL.METRIC.5 & METRIC & mutual information        & ICC, fingerprint \\
+FSL.METRIC.6 & METRIC & wavelet coherence         & ICC, fingerprint \\
+FSL.METRIC.7 & METRIC & tangent embedding         & ICC, fingerprint \\
+\end{longtable}
 
-We will state explicit criteria for robustness, for example whether the spread induced by reasonable pipelines is materially smaller than the estimated effect of interest.
+%% === SPM TABLE ===
 
-\section{Planned Results}
+\subsection{SPM perturbations}
 
-The planned outputs for Paper 1 are:
+\begin{longtable}{@{}llll@{}}
+\caption{All 64 OAT perturbations from SPM.DEFAULT.}\label{tab:spm_variants}\\
+\toprule
+Code & Step & What changes & Local metric \\
+\midrule
+\endfirsthead
+\multicolumn{4}{@{}l}{\textit{Table~\ref{tab:spm_variants} continued}}\\
+\toprule
+Code & Step & What changes & Local metric \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+SPM.MC.1  & MC & ref $\to$ mean                & FD, DVARS \\
+SPM.MC.2  & MC & ref $\to$ middle              & FD, DVARS \\
+SPM.MC.3  & MC & tool $\to$ MCFLIRT (FSL)      & FD, DVARS \\
+SPM.MC.4  & MC & tool $\to$ 3dvolreg (AFNI)    & FD, DVARS \\
+SPM.MC.5  & MC & 2-pass (estimate then reslice) & FD, DVARS \\
+SPM.MC.6  & MC & cost $\to$ normcorr           & FD, DVARS \\
+\midrule
+SPM.STC.1 & STC & skip STC entirely            & tSNR \\
+SPM.STC.2 & STC & ref $\to$ first slice         & tSNR \\
+SPM.STC.3 & STC & STC before MC (order swap)   & tSNR \\
+SPM.STC.4 & STC & interp $\to$ sinc (FSL-style) & tSNR \\
+SPM.STC.5 & STC & interp $\to$ spline          & tSNR \\
+SPM.STC.6 & STC & ref $\to$ last slice          & tSNR \\
+SPM.STC.7 & STC & interp $\to$ linear          & tSNR \\
+\midrule
+SPM.SDC.1 & SDC & skip SDC entirely            & Dice w/ T1w \\
+SPM.SDC.2 & SDC & tool $\to$ TOPUP (FSL)       & Dice w/ T1w \\
+SPM.SDC.3 & SDC & tool $\to$ FUGUE (FSL)       & Dice w/ T1w \\
+SPM.SDC.4 & SDC & tool $\to$ SyN-SDC           & Dice w/ T1w \\
+SPM.SDC.5 & SDC & tool $\to$ 3dQwarp (AFNI)    & Dice w/ T1w \\
+SPM.SDC.6 & SDC & SDC before MC (order swap)   & Dice w/ T1w \\
+\midrule
+SPM.NORM.1 & NORM & tool $\to$ Old Normalise    & Dice w/ MNI \\
+SPM.NORM.2 & NORM & tool $\to$ FNIRT (FSL)      & Dice w/ MNI \\
+SPM.NORM.3 & NORM & tool $\to$ ANTs SyN         & Dice w/ MNI \\
+SPM.NORM.4 & NORM & strategy $\to$ direct        & Dice w/ MNI \\
+SPM.NORM.5 & NORM & template $\to$ study-specific & Dice w/ MNI \\
+SPM.NORM.6 & NORM & tool $\to$ FreeSurfer        & Dice w/ MNI \\
+SPM.NORM.7 & NORM & template $\to$ NLin2009cAsym & Dice w/ MNI \\
+\midrule
+SPM.SMOOTH.1 & SMOOTH & FWHM $\to$ 0\,mm (none)  & tSNR, homog. \\
+SPM.SMOOTH.2 & SMOOTH & FWHM $\to$ 2\,mm          & tSNR, homog. \\
+SPM.SMOOTH.3 & SMOOTH & FWHM $\to$ 4\,mm          & tSNR, homog. \\
+SPM.SMOOTH.4 & SMOOTH & FWHM $\to$ 6\,mm          & tSNR, homog. \\
+SPM.SMOOTH.5 & SMOOTH & kernel $\to$ SUSAN (FSL)   & tSNR, homog. \\
+SPM.SMOOTH.6 & SMOOTH & surface-based              & tSNR, homog. \\
+\midrule
+SPM.FILT.1 & FILT & band $\to$ 0.008--0.09\,Hz   & PSD, var.\ ratio \\
+SPM.FILT.2 & FILT & band $\to$ 0.01--0.08\,Hz    & PSD, var.\ ratio \\
+SPM.FILT.3 & FILT & HP only (0.01\,Hz)            & PSD, var.\ ratio \\
+SPM.FILT.4 & FILT & skip filtering                & PSD, var.\ ratio \\
+SPM.FILT.5 & FILT & method $\to$ DCT              & PSD, var.\ ratio \\
+SPM.FILT.6 & FILT & method $\to$ Fourier notch    & PSD, var.\ ratio \\
+\midrule
+SPM.REG.1  & REG & strategy $\to$ 6P only        & QC--FC corr. \\
+SPM.REG.2  & REG & strategy $\to$ 8P (6P+WM/CSF) & QC--FC corr. \\
+SPM.REG.3  & REG & strategy $\to$ 12P            & QC--FC corr. \\
+SPM.REG.4  & REG & strategy $\to$ 36P            & QC--FC corr. \\
+SPM.REG.5  & REG & strategy $\to$ aCompCor (5)   & QC--FC corr. \\
+SPM.REG.6  & REG & strategy $\to$ ICA-AROMA      & QC--FC corr. \\
+SPM.REG.7  & REG & add GSR                       & QC--FC corr. \\
+SPM.REG.8  & REG & scrub FD $> 0.5$\,mm          & QC--FC corr. \\
+SPM.REG.9  & REG & scrub FD $> 0.2$\,mm          & QC--FC corr. \\
+SPM.REG.10 & REG & scrub $\to$ spike regressors  & QC--FC corr. \\
+\midrule
+SPM.PARC.1  & PARC & atlas $\to$ Schaefer 100    & Homogeneity \\
+SPM.PARC.2  & PARC & atlas $\to$ Schaefer 200    & Homogeneity \\
+SPM.PARC.3  & PARC & atlas $\to$ Schaefer 400    & Homogeneity \\
+SPM.PARC.4  & PARC & atlas $\to$ Schaefer 1000   & Homogeneity \\
+SPM.PARC.5  & PARC & atlas $\to$ Glasser 360     & Homogeneity \\
+SPM.PARC.6  & PARC & atlas $\to$ Desikan-Killiany & Homogeneity \\
+SPM.PARC.7  & PARC & atlas $\to$ Gordon 333      & Homogeneity \\
+SPM.PARC.8  & PARC & atlas $\to$ Craddock 200    & Homogeneity \\
+SPM.PARC.9  & PARC & extraction $\to$ eigenvariate & Homogeneity \\
+\midrule
+SPM.METRIC.1 & METRIC & Fisher-$z$ $\to$ off     & ICC, fingerprint \\
+SPM.METRIC.2 & METRIC & partial correlation       & ICC, fingerprint \\
+SPM.METRIC.3 & METRIC & L2-regularised partial    & ICC, fingerprint \\
+SPM.METRIC.4 & METRIC & L1 sparse inverse cov.    & ICC, fingerprint \\
+SPM.METRIC.5 & METRIC & mutual information        & ICC, fingerprint \\
+SPM.METRIC.6 & METRIC & wavelet coherence         & ICC, fingerprint \\
+SPM.METRIC.7 & METRIC & tangent embedding         & ICC, fingerprint \\
+\end{longtable}
 
-\begin{itemize}
-    \item a conceptual and mathematical framing of analysis-choice marginalisation,
-    \item a WAND-based empirical multiverse up to the connectivity matrix,
-    \item robustness summaries for 3T and 7T connectivity estimation,
-    \item a ranking of which pipeline stages contribute most to downstream uncertainty.
-\end{itemize}
+%% === FMRIPREP TABLE ===
+
+\subsection{fMRIPrep perturbations}
+
+\begin{longtable}{@{}llll@{}}
+\caption{All 64 OAT perturbations from FMRIPREP.DEFAULT.}\label{tab:fmriprep_variants}\\
+\toprule
+Code & Step & What changes & Local metric \\
+\midrule
+\endfirsthead
+\multicolumn{4}{@{}l}{\textit{Table~\ref{tab:fmriprep_variants} continued}}\\
+\toprule
+Code & Step & What changes & Local metric \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+FMRIPREP.MC.1  & MC & ref $\to$ mean              & FD, DVARS \\
+FMRIPREP.MC.2  & MC & ref $\to$ first             & FD, DVARS \\
+FMRIPREP.MC.3  & MC & tool $\to$ SPM Realign      & FD, DVARS \\
+FMRIPREP.MC.4  & MC & tool $\to$ 3dvolreg (AFNI)  & FD, DVARS \\
+FMRIPREP.MC.5  & MC & cost $\to$ mutualinfo       & FD, DVARS \\
+FMRIPREP.MC.6  & MC & cost $\to$ leastsq          & FD, DVARS \\
+\midrule
+FMRIPREP.STC.1 & STC & skip STC                   & tSNR \\
+FMRIPREP.STC.2 & STC & ref $\to$ 0 (first slice)  & tSNR \\
+FMRIPREP.STC.3 & STC & STC before MC (order swap) & tSNR \\
+FMRIPREP.STC.4 & STC & interp $\to$ sinc          & tSNR \\
+FMRIPREP.STC.5 & STC & interp $\to$ spline        & tSNR \\
+FMRIPREP.STC.6 & STC & ref $\to$ 1 (last slice)   & tSNR \\
+FMRIPREP.STC.7 & STC & interp $\to$ linear        & tSNR \\
+\midrule
+FMRIPREP.SDC.1 & SDC & skip SDC entirely          & Dice w/ T1w \\
+FMRIPREP.SDC.2 & SDC & tool $\to$ FUGUE (force)   & Dice w/ T1w \\
+FMRIPREP.SDC.3 & SDC & SyN-SDC for both (force)   & Dice w/ T1w \\
+FMRIPREP.SDC.4 & SDC & tool $\to$ SPM FieldMap    & Dice w/ T1w \\
+FMRIPREP.SDC.5 & SDC & tool $\to$ 3dQwarp (AFNI)  & Dice w/ T1w \\
+FMRIPREP.SDC.6 & SDC & SDC before MC (order swap) & Dice w/ T1w \\
+\midrule
+FMRIPREP.NORM.1 & NORM & tool $\to$ FNIRT (FSL)    & Dice w/ MNI \\
+FMRIPREP.NORM.2 & NORM & tool $\to$ DARTEL (SPM)   & Dice w/ MNI \\
+FMRIPREP.NORM.3 & NORM & strategy $\to$ direct      & Dice w/ MNI \\
+FMRIPREP.NORM.4 & NORM & template $\to$ study-spec. & Dice w/ MNI \\
+FMRIPREP.NORM.5 & NORM & tool $\to$ FreeSurfer      & Dice w/ MNI \\
+FMRIPREP.NORM.6 & NORM & template $\to$ NLin6Asym   & Dice w/ MNI \\
+FMRIPREP.NORM.7 & NORM & tool $\to$ SPM Normalise   & Dice w/ MNI \\
+\midrule
+FMRIPREP.SMOOTH.1 & SMOOTH & FWHM $\to$ 2\,mm Gauss. & tSNR, homog. \\
+FMRIPREP.SMOOTH.2 & SMOOTH & FWHM $\to$ 4\,mm Gauss. & tSNR, homog. \\
+FMRIPREP.SMOOTH.3 & SMOOTH & FWHM $\to$ 6\,mm Gauss. & tSNR, homog. \\
+FMRIPREP.SMOOTH.4 & SMOOTH & FWHM $\to$ 8\,mm Gauss. & tSNR, homog. \\
+FMRIPREP.SMOOTH.5 & SMOOTH & kernel $\to$ SUSAN 6\,mm & tSNR, homog. \\
+FMRIPREP.SMOOTH.6 & SMOOTH & surface-based 6\,mm      & tSNR, homog. \\
+\midrule
+FMRIPREP.FILT.1 & FILT & Butterworth 0.01--0.1\,Hz  & PSD, var.\ ratio \\
+FMRIPREP.FILT.2 & FILT & Butterworth 0.008--0.09\,Hz & PSD, var.\ ratio \\
+FMRIPREP.FILT.3 & FILT & Butterworth 0.01--0.08\,Hz & PSD, var.\ ratio \\
+FMRIPREP.FILT.4 & FILT & HP only (0.01\,Hz)         & PSD, var.\ ratio \\
+FMRIPREP.FILT.5 & FILT & method $\to$ DCT           & PSD, var.\ ratio \\
+FMRIPREP.FILT.6 & FILT & method $\to$ Fourier notch & PSD, var.\ ratio \\
+\midrule
+FMRIPREP.REG.1  & REG & strategy $\to$ 6P only      & QC--FC corr. \\
+FMRIPREP.REG.2  & REG & strategy $\to$ 8P (6P+WM/CSF) & QC--FC corr. \\
+FMRIPREP.REG.3  & REG & strategy $\to$ 24P Friston  & QC--FC corr. \\
+FMRIPREP.REG.4  & REG & strategy $\to$ 36P          & QC--FC corr. \\
+FMRIPREP.REG.5  & REG & aCompCor only (no AROMA)    & QC--FC corr. \\
+FMRIPREP.REG.6  & REG & ICA-AROMA only (no aCompCor) & QC--FC corr. \\
+FMRIPREP.REG.7  & REG & add GSR                     & QC--FC corr. \\
+FMRIPREP.REG.8  & REG & scrub FD $> 0.5$\,mm        & QC--FC corr. \\
+FMRIPREP.REG.9  & REG & scrub FD $> 0.2$\,mm        & QC--FC corr. \\
+FMRIPREP.REG.10 & REG & scrub $\to$ spike regressors & QC--FC corr. \\
+\midrule
+FMRIPREP.PARC.1  & PARC & atlas $\to$ Schaefer 100  & Homogeneity \\
+FMRIPREP.PARC.2  & PARC & atlas $\to$ Schaefer 400  & Homogeneity \\
+FMRIPREP.PARC.3  & PARC & atlas $\to$ Schaefer 1000 & Homogeneity \\
+FMRIPREP.PARC.4  & PARC & atlas $\to$ Glasser 360   & Homogeneity \\
+FMRIPREP.PARC.5  & PARC & atlas $\to$ AAL3          & Homogeneity \\
+FMRIPREP.PARC.6  & PARC & atlas $\to$ Desikan-Killiany & Homogeneity \\
+FMRIPREP.PARC.7  & PARC & atlas $\to$ Gordon 333    & Homogeneity \\
+FMRIPREP.PARC.8  & PARC & atlas $\to$ Craddock 200  & Homogeneity \\
+FMRIPREP.PARC.9  & PARC & extraction $\to$ eigenvariate & Homogeneity \\
+\midrule
+FMRIPREP.METRIC.1 & METRIC & Fisher-$z$ $\to$ off   & ICC, fingerprint \\
+FMRIPREP.METRIC.2 & METRIC & partial correlation     & ICC, fingerprint \\
+FMRIPREP.METRIC.3 & METRIC & L2-regularised partial  & ICC, fingerprint \\
+FMRIPREP.METRIC.4 & METRIC & L1 sparse inverse cov.  & ICC, fingerprint \\
+FMRIPREP.METRIC.5 & METRIC & mutual information      & ICC, fingerprint \\
+FMRIPREP.METRIC.6 & METRIC & wavelet coherence       & ICC, fingerprint \\
+FMRIPREP.METRIC.7 & METRIC & tangent embedding       & ICC, fingerprint \\
+\end{longtable}
+
+\section{Results}
+
+\textit{Results will be populated once the 195 pipeline configurations have been executed across the WAND dataset.  Planned subsections are listed below as placeholders.}
+
+\subsection{Overall multiverse spread}
+% How much do FC matrices vary across all 195 pipelines?
+% Distribution of matrix correlations with each ecosystem default.
+
+\subsection{Step-level sensitivity ranking}
+% OAT sensitivity bar chart: which step produces the largest between-pipeline variance?
+% Split by ecosystem and by field strength (3T vs 7T).
+
+\subsection{Local metric summaries}
+% Per-step local metric distributions across variants.
+% Identification of local-win / global-loss paradox instances.
+
+\subsection{Global metric summaries}
+% Fingerprinting accuracy, 3T/7T discriminability, and modularity across the multiverse.
+
+\subsection{Field-strength interaction}
+% Are certain steps more sensitive at 7T than 3T?
+% Are 3T-vs-7T differences stable across pipelines?
+
+\subsection{Cross-ecosystem comparison}
+% Do the three ecosystem defaults produce materially different FC matrices?
+% Do the OAT sensitivity rankings agree across ecosystems?
 
 \section{Discussion}
 
-The discussion will focus on three points:
+\textit{The discussion will be written after results are available.  Planned topics are listed below.}
 
-\begin{enumerate}[label=\arabic*.]
-    \item why stopping at the connectivity object is methodologically useful,
-    \item what constitutes a robust result at this stage of the pipeline,
-    \item how these findings motivate the follow-up paper on network discovery and network-based inference.
-\end{enumerate}
+\subsection{Which preprocessing choices matter most?}
+% Interpretation of the step-level sensitivity ranking.
 
-\section{Relationship to Paper 2}
+\subsection{The local-win / global-loss paradox in practice}
+% Concrete examples from results; implications for step-level optimisation.
 
-Paper 2 will begin from the connectivity object and ask how downstream representational and inferential choices shape network discovery and network-based claims. That work will therefore build directly on the uncertainty estimates established here.
+\subsection{Ecosystem differences}
+% Are FSL, SPM, and fMRIPrep defaults closer to each other than their own perturbations, or further apart?
+
+\subsection{Field-strength considerations}
+% 3T vs 7T sensitivity differences; implications for ultra-high-field preprocessing.
+
+\subsection{Limitations}
+% OAT vs full factorial; single dataset; resting-state only; deterministic pipelines.
+
+\subsection{Relationship to Paper 2}
+% How the FC-level uncertainty established here propagates into network discovery and inference.
 
 \newpage
 \bibliographystyle{unsrtnat}
 \bibliography{references}
+
+%% === APPENDIX ===
+
+\appendix
+\section{Detailed Step Descriptions}
+\label{app:steps}
+
+This appendix provides, for each of the nine preprocessing steps: (i) a plain-language explanation of what the step does and why it is needed, (ii) a technical description with mathematical formulation, (iii) a summary of key literature comparing methods, (iv) mathematical definitions of the local quality metrics, and (v) a description of the local-win / global-loss paradox specific to that step.
+
+%% ---------------------------------------------------------------
+\subsection{Step 1: Motion Correction (MC)}
+\label{app:mc}
+
+\paragraph{Layman explanation.}
+When a person lies in the MRI scanner, they inevitably move---even by a fraction of a millimetre.  Because fMRI builds up a three-dimensional picture slice by slice over time, even small movements mean the same brain region can shift to a different set of voxels from one time-point to the next.  Motion correction realigns every volume to a reference image so that each voxel corresponds to the same piece of brain across the entire scan.
+
+\paragraph{Technical description.}
+Motion correction estimates a rigid-body transformation (three translations and three rotations) that minimises the mismatch between each volume $V_t$ and a reference volume $V_{\mathrm{ref}}$:
+\begin{equation}
+    \hat{T}_t = \arg\min_{T \in \mathrm{SE}(3)} \; \mathcal{C}\!\bigl(V_t \circ T,\; V_{\mathrm{ref}}\bigr),
+\end{equation}
+where $\mathrm{SE}(3)$ is the group of rigid-body transformations in 3-D, $\circ$ denotes spatial resampling, and $\mathcal{C}$ is a cost function.  Common cost functions include normalised correlation (MCFLIRT default \citep{jenkinson2002}), least squares (SPM Realign default), and mutual information.  The choice of reference volume (first, middle, or mean) and the cost function are the primary branch points.
+
+\paragraph{Literature.}
+\citet{jenkinson2002} introduced MCFLIRT, which uses a multi-resolution optimisation scheme with normalised correlation, and showed that it outperformed earlier tools in accuracy and robustness.  SPM's Realign uses a least-squares cost function with a two-pass option (estimate then reslice).  AFNI's \texttt{3dvolreg} uses Fourier interpolation and supports several cost functions.  Empirical comparisons \citep{oakes2005} show that the choice of algorithm and reference volume can alter framewise displacement estimates by 10--30\%, with downstream effects on connectivity estimates.
+
+\paragraph{Local metric: framewise displacement and DVARS.}
+Framewise displacement (FD) summarises volume-to-volume head movement as the sum of absolute displacements at the cortical surface \citep{power2012}:
+\begin{equation}
+    \mathrm{FD}_t = |\Delta d_x| + |\Delta d_y| + |\Delta d_z| + r\,(|\Delta\alpha| + |\Delta\beta| + |\Delta\gamma|),
+\end{equation}
+where $\Delta d$ and $\Delta\alpha$ are translational and rotational increments and $r = 50$\,mm is an approximate head radius.  DVARS measures the root-mean-square change in voxel intensity between consecutive volumes:
+\begin{equation}
+    \mathrm{DVARS}_t = \sqrt{\frac{1}{N}\sum_{i=1}^{N}\bigl(V_t(i) - V_{t-1}(i)\bigr)^2}.
+\end{equation}
+Lower FD and DVARS after motion correction indicate better realignment.  We also report post-MC temporal signal-to-noise ratio (tSNR), defined as the voxelwise mean divided by standard deviation across time.
+
+\paragraph{Local-win / global-loss paradox.}
+An aggressive motion-correction algorithm may achieve a lower mean FD by applying large interpolation corrections, but repeated resampling introduces spatial blurring that reduces the effective spatial resolution.  At 7\,T, where the native resolution is 1.5\,mm isotropic, this blurring can be substantial relative to the voxel size, potentially degrading the FC matrix even though the local metric (FD) improves.
+
+%% ---------------------------------------------------------------
+\subsection{Step 2: Slice-Timing Correction (STC)}
+\label{app:stc}
+
+\paragraph{Layman explanation.}
+An fMRI volume is not captured all at once---it is acquired one slice at a time over the course of each repetition time (TR).  This means the bottom slice and the top slice of the brain are recorded at slightly different moments.  Slice-timing correction adjusts the signal in each slice so that the entire volume appears to have been captured simultaneously, usually at the time of a chosen reference slice.
+
+\paragraph{Technical description.}
+Each voxel's time-series is temporally interpolated to align to a common reference time $t_{\mathrm{ref}}$ within the TR.  For a voxel in slice $s$ acquired at time $t_s$ within the TR, the corrected signal is:
+\begin{equation}
+    \tilde{x}(t) = \sum_{k} x(t_k)\, h(t + t_{\mathrm{ref}} - t_s - t_k),
+\end{equation}
+where $h$ is the interpolation kernel.  Common kernels include: sinc (Shannon-optimal, used by FSL's \texttt{slicetimer}), Fourier-domain phase-shifting (SPM default), cubic spline, and linear.  The choice of kernel determines the trade-off between temporal fidelity and noise amplification.
+
+\paragraph{Literature.}
+\citet{sladky2011} showed that slice-timing correction significantly improves statistical sensitivity in event-related designs, particularly when the TR is long ($>$2\,s) or the slice acquisition order is interleaved.  \citet{parker2017} demonstrated that for short TRs ($<$1\,s, as in multiband acquisitions), STC provides diminishing returns and can even introduce artefacts if the interpolation kernel is poorly matched to the data.  The WAND 7\,T data have TR\,=\,1.5\,s with multiband factor 4, placing them in the intermediate regime where STC effects are non-trivial.
+
+\paragraph{Local metric: tSNR and spectral power.}
+We measure tSNR before and after STC.  Successful STC should preserve or increase tSNR by reducing temporal misalignment noise.  We additionally compute the power spectral density (PSD) in the BOLD frequency band (0.01--0.1\,Hz); STC should concentrate power in this band relative to higher frequencies.
+
+\paragraph{Local-win / global-loss paradox.}
+Fourier-based STC applied to short-TR multiband data can introduce temporal ringing at slice boundaries, locally increasing tSNR (by smoothing) while creating spurious correlations between adjacent slices.  These artefactual correlations propagate into the FC matrix as inflated short-range connectivity.
+
+%% ---------------------------------------------------------------
+\subsection{Step 3: Distortion Correction (SDC)}
+\label{app:sdc}
+
+\paragraph{Layman explanation.}
+The fast imaging technique used for fMRI (echo-planar imaging, or EPI) is sensitive to differences in the magnetic field across the brain.  Near air-tissue boundaries---above the sinuses, near the ear canals---the field is non-uniform, causing the image to warp, stretch, or compress.  Distortion correction uses an independent measurement of the field non-uniformity (a ``field map'') to unwarp the image back to its true geometry.
+
+\paragraph{Technical description.}
+The geometric distortion along the phase-encoding direction $y$ is proportional to the accumulated field inhomogeneity:
+\begin{equation}
+    \Delta y(\mathbf{r}) = \gamma \, \Delta B_0(\mathbf{r}) \, T_{\mathrm{ro}},
+\end{equation}
+where $\gamma$ is the gyromagnetic ratio, $\Delta B_0(\mathbf{r})$ is the local field offset, and $T_{\mathrm{ro}}$ is the total readout time.  Two main approaches exist for estimating $\Delta B_0$:
+
+\begin{enumerate}[label=(\alph*)]
+    \item \textbf{Phase-difference field mapping} (e.g.\ FSL FUGUE, SPM FieldMap): acquires two gradient-echo images at different echo times; the phase difference is proportional to $\Delta B_0$.
+    \item \textbf{Reverse phase-encoding} (e.g.\ FSL TOPUP \citep{andersson2003}): acquires two EPI volumes with opposite PE directions (AP and PA); the distortions are equal and opposite, allowing the undistorted image to be recovered.
+\end{enumerate}
+
+Field-map-free approaches (e.g.\ SyN-SDC, SynBOLD-DisCo) use nonlinear registration to an anatomical image to estimate the distortion field without dedicated field-map acquisitions.
+
+\paragraph{Literature.}
+\citet{andersson2003} introduced TOPUP and showed that reverse-PE correction substantially improves geometric accuracy, particularly at high field strengths where $\Delta B_0$ is larger.  \citet{jezzard1995} demonstrated that uncorrected susceptibility distortions at 3\,T can shift cortical voxels by several millimetres.  At 7\,T, distortions are approximately proportional to field strength, making accurate SDC critical \citep{robinson2014}.  The WAND dataset provides reverse-PE blips at 7\,T (enabling TOPUP) but only a GRE field map at 3\,T (originally targeted at ASL, not BOLD), creating an informative asymmetry.
+
+\paragraph{Local metric: Dice overlap and mutual information.}
+We compute the Dice coefficient between the brain mask of the distortion-corrected EPI and the brain mask of the co-registered T1-weighted anatomical:
+\begin{equation}
+    \mathrm{Dice} = \frac{2\,|M_{\mathrm{EPI}} \cap M_{\mathrm{T1w}}|}{|M_{\mathrm{EPI}}| + |M_{\mathrm{T1w}}|}.
+\end{equation}
+Higher Dice indicates better geometric correspondence.  We also report the mutual information (MI) between the corrected EPI and the T1w image.
+
+\paragraph{Local-win / global-loss paradox.}
+An aggressive nonlinear unwarp (e.g.\ SyN-SDC with high regularisation freedom) can achieve near-perfect Dice overlap by warping the EPI to match the T1w anatomy.  However, if the warp is driven partly by signal (not just geometry), it can shift BOLD signal from one parcel to another, creating spurious inter-parcel correlations in the FC matrix.
+
+%% === APPENDIX A.4-A.6 ===
+
+%% ---------------------------------------------------------------
+\subsection{Step 4: Spatial Normalisation (NORM)}
+\label{app:norm}
+
+\paragraph{Layman explanation.}
+Every person's brain is a slightly different shape and size.  To compare brains across subjects, we need to warp each individual's brain into a common template shape---like fitting different-sized feet into a standard shoe mould.  This ``normalisation'' step ensures that when we talk about, say, the left motor cortex, we are referring to the same location in every subject.
+
+\paragraph{Technical description.}
+Spatial normalisation maps each subject's brain from native space to a standard template (typically MNI152) via a deformation field $\boldsymbol\phi$:
+\begin{equation}
+    I_{\mathrm{template}}(\mathbf{r}) \approx I_{\mathrm{subject}}\!\bigl(\boldsymbol\phi(\mathbf{r})\bigr).
+\end{equation}
+The deformation field is estimated by minimising a cost function that balances image similarity with a regularisation penalty on the deformation's smoothness:
+\begin{equation}
+    \hat{\boldsymbol\phi} = \arg\min_{\boldsymbol\phi} \;\bigl[\mathcal{D}\!\bigl(I_{\mathrm{template}},\, I_{\mathrm{subject}} \circ \boldsymbol\phi\bigr) + \lambda\,\mathcal{R}(\boldsymbol\phi)\bigr],
+\end{equation}
+where $\mathcal{D}$ is a dissimilarity measure (e.g.\ sum of squared differences, correlation ratio, mutual information) and $\mathcal{R}$ is a regulariser (e.g.\ bending energy, elastic penalty, diffeomorphic constraint).
+
+Major algorithms differ in the parameterisation of $\boldsymbol\phi$: FNIRT (FSL) uses B-spline basis functions \citep{andersson2007}; DARTEL (SPM) uses diffeomorphic exponentiated Lie algebra \citep{ashburner2007}; ANTs SyN uses symmetric diffeomorphic registration with cross-correlation \citep{avants2008}.  The standard two-step approach first registers the T1w to the template, then applies the combined warp to the BOLD data.
+
+\paragraph{Literature.}
+\citet{klein2009} compared 14 nonlinear registration algorithms on expert-labelled brain data and found that ANTs SyN and SPM's DARTEL consistently achieved the highest overlap accuracy.  FNIRT performed well but slightly below the top tier.  The choice of template (MNI152NLin6Asym vs.\ MNI152NLin2009cAsym) and strategy (direct vs.\ two-step vs.\ study-specific intermediate template) are additional branch points.
+
+At 7\,T, the MP2RAGE contrast (PSIR reconstruction) differs from the MPRAGE contrast assumed by many registration tools, which may require using the first inversion image or synthesising an MPRAGE-equivalent volume before registration.
+
+\paragraph{Local metric: Dice overlap and Jacobian determinants.}
+We compute Dice overlap between warped subject tissue masks (GM, WM, CSF) and the corresponding MNI template priors.  We also report the distribution of Jacobian determinants $|J(\boldsymbol\phi)|$ across voxels; negative Jacobians indicate topology violations (folding), and extreme values indicate implausible local expansions or compressions:
+\begin{equation}
+    J(\boldsymbol\phi)(\mathbf{r}) = \det\!\left(\frac{\partial \boldsymbol\phi}{\partial \mathbf{r}}\right).
+\end{equation}
+
+\paragraph{Local-win / global-loss paradox.}
+A highly flexible nonlinear warp (e.g.\ ANTs SyN with fine control-point spacing) achieves excellent Dice overlap by closely matching individual sulcal patterns to the template.  However, in doing so it may warp functionally distinct regions into the same template voxel, creating artificial signal mixing.  A less aggressive warp (e.g.\ affine-only) preserves functional boundaries but at the cost of poorer anatomical alignment, increasing between-subject spatial noise in the FC matrix.
+
+%% ---------------------------------------------------------------
+\subsection{Step 5: Spatial Smoothing (SMOOTH)}
+\label{app:smooth}
+
+\paragraph{Layman explanation.}
+After normalisation, each voxel still contains a mix of true brain signal and random noise.  Spatial smoothing averages each voxel's signal with its neighbours, like applying a soft-focus filter to a photograph.  This boosts the signal relative to noise but at the cost of blurring fine spatial details.
+
+\paragraph{Technical description.}
+Smoothing convolves the 3-D volume at each time-point with a spatial kernel $G$:
+\begin{equation}
+    \tilde{V}_t(\mathbf{r}) = (V_t * G)(\mathbf{r}) = \int V_t(\mathbf{r}') \, G(\mathbf{r} - \mathbf{r}') \, d\mathbf{r}'.
+\end{equation}
+The most common kernel is an isotropic Gaussian with full-width at half-maximum (FWHM) $w$:
+\begin{equation}
+    G(\mathbf{r};\, w) = \frac{1}{(2\pi\sigma^2)^{3/2}} \exp\!\left(-\frac{|\mathbf{r}|^2}{2\sigma^2}\right), \qquad \sigma = \frac{w}{2\sqrt{2\ln 2}}.
+\end{equation}
+FSL's SUSAN \citep{smith1997} is an edge-preserving alternative: it smooths within regions of similar intensity but not across tissue boundaries, effectively implementing an adaptive, non-isotropic kernel.
+
+\paragraph{Literature.}
+The ``matched-filter theorem'' suggests that optimal smoothing matches the spatial extent of the signal of interest \citep{worsley1996}.  For resting-state FC, most studies use 4--8\,mm FWHM.  \citet{scheinost2014} showed that smoothing interacts strongly with parcellation granularity: large smoothing kernels (8+\,mm) reduce between-parcel contrast and inflate within-network connectivity estimates.  At 7\,T, where native resolution is 1.5\,mm, even moderate smoothing (4\,mm) roughly triples the effective voxel volume.
+
+\paragraph{Local metric: tSNR and within-parcel homogeneity.}
+We report tSNR (which increases monotonically with smoothing) and within-parcel homogeneity, defined as the mean pairwise correlation among voxels within each parcel:
+\begin{equation}
+    H_p = \frac{2}{n_p(n_p - 1)} \sum_{i < j \in p} r(x_i, x_j),
+\end{equation}
+where $n_p$ is the number of voxels in parcel $p$ and $r(x_i, x_j)$ is the Pearson correlation between voxel time-series.  We also report between-parcel leakage: the mean correlation between voxels in adjacent parcels.
+
+\paragraph{Local-win / global-loss paradox.}
+Increasing FWHM from 4 to 8\,mm reliably increases tSNR (the local metric improves).  However, the additional blurring smears signal across parcel boundaries, inflating short-range FC edges and reducing the discriminability of distinct parcels.  The FC matrix becomes smoother and more uniform, losing fine-grained network structure that may carry scientific information.
+
+%% ---------------------------------------------------------------
+\subsection{Step 6: Temporal Filtering (FILT)}
+\label{app:filt}
+
+\paragraph{Layman explanation.}
+The raw fMRI signal contains fluctuations at many different speeds: slow drifts from scanner heating, fast oscillations from breathing and heartbeat, and---in between---the slow spontaneous brain activity we actually want to study (roughly one cycle every 10--100 seconds).  Temporal filtering removes the unwanted fast and slow components, keeping only the frequency band thought to contain neural signal.
+
+\paragraph{Technical description.}
+Bandpass filtering retains signal within a passband $[f_L, f_H]$:
+\begin{equation}
+    \tilde{X}(f) = X(f) \cdot H(f), \qquad H(f) = \begin{cases} 1 & \text{if } f_L \le |f| \le f_H, \\ 0 & \text{otherwise,} \end{cases}
+\end{equation}
+where $X(f)$ is the Fourier transform of the voxel time-series and $H(f)$ is the ideal filter transfer function.  In practice, $H$ is replaced by a smooth approximation to avoid Gibbs ringing.  Common implementations include Butterworth IIR filters (applied zero-phase via \texttt{filtfilt}), discrete cosine transform (DCT) basis regressors \citep{friston2000}, and Fourier-domain notch filters.
+
+The standard resting-state passband is 0.01--0.1\,Hz.  Variants include 0.008--0.09\,Hz, 0.01--0.08\,Hz, high-pass only (0.01\,Hz), and no filtering.
+
+\paragraph{Literature.}
+\citet{hallquist2013} demonstrated a critical interaction between temporal filtering and nuisance regression: if the nuisance regressors are not filtered with the same passband as the data, variance that was removed by regression can be reintroduced by the filter.  This means the order and consistency of filtering and regression steps matters.  \citet{caballero2017} showed that the choice of passband affects group-level FC estimates, with wider bands retaining more between-subject variance.
+
+\paragraph{Local metric: power spectral density and variance ratio.}
+We compute the power spectral density (PSD) of each voxel's time-series and report: (i)~the fraction of total power within the passband (``BOLD-band variance ratio''):
+\begin{equation}
+    R_{\mathrm{BOLD}} = \frac{\int_{f_L}^{f_H} S(f)\, df}{\int_{0}^{f_{\mathrm{Nyq}}} S(f)\, df},
+\end{equation}
+and (ii)~the ratio of low-frequency to high-frequency power (LFHF ratio).  Higher $R_{\mathrm{BOLD}}$ indicates more effective isolation of the BOLD band.
+
+\paragraph{Local-win / global-loss paradox.}
+Aggressive bandpass filtering (e.g.\ 0.01--0.08\,Hz) concentrates power in the target band, maximising $R_{\mathrm{BOLD}}$.  However, real neural signal can extend beyond 0.08\,Hz, particularly at 7\,T where physiological noise sits at higher frequencies and BOLD fluctuations may have faster dynamics.  If the filter is too narrow, it removes genuine variance, reducing the reliability and individual discriminability of the resulting FC matrices.  Additionally, if nuisance regressors are not identically filtered, the filter can reintroduce confound variance \citep{hallquist2013}.
+
+%% === APPENDIX A.7-A.9 ===
+
+%% ---------------------------------------------------------------
+\subsection{Step 7: Nuisance Regression (REG)}
+\label{app:reg}
+
+\paragraph{Layman explanation.}
+Not all fluctuations in the fMRI signal come from the brain.  Head movement, breathing, heartbeat, and slow scanner drifts all create signal changes that look like neural activity but are not.  Nuisance regression tries to remove these non-neural signals by building a mathematical model of the noise sources and subtracting their estimated contribution from each voxel's time-series, leaving (ideally) only the genuine brain signal behind.
+
+\paragraph{Technical description.}
+Nuisance regression fits a general linear model (GLM) at each voxel:
+\begin{equation}
+    \mathbf{x} = \mathbf{Z}\boldsymbol\beta + \boldsymbol\varepsilon,
+\end{equation}
+where $\mathbf{x} \in \mathbb{R}^T$ is the voxel time-series, $\mathbf{Z} \in \mathbb{R}^{T \times q}$ is the design matrix of $q$ nuisance regressors, $\boldsymbol\beta$ are the regression coefficients, and the cleaned signal is the residual $\hat{\boldsymbol\varepsilon} = \mathbf{x} - \mathbf{Z}\hat{\boldsymbol\beta}$.
+
+Common regressor sets include:
+\begin{itemize}
+    \item \textbf{6P}: six rigid-body motion parameters (3 translations, 3 rotations).
+    \item \textbf{12P}: 6P plus their temporal derivatives (total 12 regressors).
+    \item \textbf{24P (Friston)}: 6P, their squares, their derivatives, and the squares of the derivatives \citep{friston1996}.
+    \item \textbf{36P}: 24P plus mean WM, mean CSF, global signal, and their derivatives and squares.
+    \item \textbf{aCompCor}: the top $k$ principal components from WM and CSF voxels (anatomical CompCor) \citep{behzadi2007}.
+    \item \textbf{ICA-AROMA}: independent component analysis identifies noise components by spatial and temporal features and regresses them out \citep{pruim2015}.
+    \item \textbf{Global signal regression (GSR)}: adds the mean whole-brain signal as a regressor; controversial because it mathematically forces some correlations to be negative \citep{murphy2009}.
+\end{itemize}
+
+Scrubbing (censoring) removes or downweights high-motion volumes entirely, either by excising time-points where $\mathrm{FD} > \tau$ (with $\tau$ typically 0.2 or 0.5\,mm) or by including a spike regressor (column of zeros with a single one) for each censored volume.
+
+\paragraph{Literature.}
+\citet{ciric2017} benchmarked 14 confound-regression strategies on the same dataset and showed that aggressive strategies (36P, aCompCor+GSR) most effectively reduce the QC--FC correlation (the residual relationship between motion and connectivity), but at the cost of removing more degrees of freedom and potentially discarding real signal.  \citet{power2012} demonstrated that even small head movements ($<$0.5\,mm) create systematic, distance-dependent artefacts in FC matrices.  \citet{parkes2018} showed that the ``best'' strategy depends on the downstream analysis and sample characteristics.
+
+\paragraph{Local metric: QC--FC correlation and degrees of freedom.}
+The primary local metric is the QC--FC correlation: the Pearson correlation between each subject's mean FD and each edge in the group FC matrix.  An effective denoising strategy should drive QC--FC correlations toward zero:
+\begin{equation}
+    \rho_{\mathrm{QC\text{-}FC}}(i,j) = \mathrm{corr}\!\bigl(\{\mathrm{FD}_s\}_{s=1}^{S},\; \{C_{ij}^{(s)}\}_{s=1}^{S}\bigr),
+\end{equation}
+where $C_{ij}^{(s)}$ is the FC edge between parcels $i$ and $j$ for subject $s$, and $\mathrm{FD}_s$ is that subject's mean FD.  We also report the distance-dependent artefact: $\rho_{\mathrm{QC\text{-}FC}}$ plotted as a function of Euclidean distance between parcel centroids.  Additionally, we track the number of degrees of freedom remaining after regression and censoring, as excessive DOF loss reduces the reliability of the FC estimate.
+
+\paragraph{Local-win / global-loss paradox.}
+The most aggressive strategy (36P + GSR + strict scrubbing at FD\,$>$\,0.2\,mm) can drive QC--FC correlations to near zero---a perfect local score.  However, this comes at a heavy cost: GSR introduces artifactual anti-correlations \citep{murphy2009}, strict scrubbing can remove 30--50\% of time-points in high-motion subjects, and the combined DOF loss can make the FC estimate so noisy that test--retest reliability and individual fingerprinting accuracy collapse.  The pipeline looks clean by one metric while destroying the signal it was meant to preserve.
+
+%% ---------------------------------------------------------------
+\subsection{Step 8: Parcellation (PARC)}
+\label{app:parc}
+
+\paragraph{Layman explanation.}
+The brain contains roughly 100\,000 voxels in a typical fMRI scan.  Computing connectivity between every pair would produce a matrix with billions of entries---far too large and noisy to interpret.  Parcellation groups voxels into a manageable number of brain regions (``parcels''), each assumed to be functionally homogeneous.  We then extract a single representative time-series per parcel and compute connectivity between parcels rather than voxels.
+
+\paragraph{Technical description.}
+A parcellation $\mathcal{P} = \{P_1, P_2, \ldots, P_N\}$ assigns each brain voxel to one of $N$ non-overlapping regions.  For each parcel $P_p$, a representative time-series $\bar{\mathbf{x}}_p$ is computed by aggregating the voxel-level signals:
+\begin{equation}
+    \bar{\mathbf{x}}_p = \frac{1}{|P_p|} \sum_{i \in P_p} \mathbf{x}_i \qquad \text{(mean extraction)},
+\end{equation}
+or, alternatively, as the first eigenvector of the within-parcel covariance matrix (eigenvariate extraction), which captures the dominant mode of variation:
+\begin{equation}
+    \bar{\mathbf{x}}_p = \arg\max_{\|\mathbf{u}\|=1} \; \mathbf{u}^\top \!\left(\frac{1}{|P_p|}\sum_{i \in P_p} \mathbf{x}_i \mathbf{x}_i^\top\right) \mathbf{u}.
+\end{equation}
+
+Major atlas families differ in how parcels are defined:
+\begin{itemize}
+    \item \textbf{Schaefer}: functionally defined from resting-state data, available at 100--1000 parcels \citep{schaefer2018}.
+    \item \textbf{Glasser (HCP-MMP1.0)}: multimodal cortical parcellation from the Human Connectome Project, 360 regions \citep{glasser2016}.
+    \item \textbf{AAL3}: anatomically defined lobar parcellation, 170 regions \citep{rolls2020}.
+    \item \textbf{Desikan--Killiany}: FreeSurfer-derived gyral parcellation, 68 cortical regions \citep{desikan2006}.
+    \item \textbf{Gordon}: resting-state boundary-mapping parcellation, 333 regions \citep{gordon2016}.
+    \item \textbf{Craddock}: spatially constrained spectral clustering, available at various granularities \citep{craddock2012}.
+\end{itemize}
+
+\paragraph{Literature.}
+\citet{eickhoff2018} reviewed parcellation approaches and argued that the optimal choice depends on the scientific question and spatial scale of interest.  \citet{arslan2018} compared 10 parcellation methods and found that functional parcellations (Schaefer, Gordon) outperform anatomical ones (AAL, Desikan) on tests of within-parcel homogeneity and test--retest reproducibility.  Granularity is a critical factor: finer parcellations (400+) capture more spatial detail but produce noisier per-parcel time-series because each parcel averages over fewer voxels.
+
+\paragraph{Local metric: within-parcel homogeneity, between-parcel contrast, and coverage.}
+Within-parcel homogeneity $H_p$ is defined as in Section~\ref{app:smooth}.  Between-parcel contrast is defined as the ratio:
+\begin{equation}
+    \mathrm{Contrast} = \frac{\bar{H}_{\mathrm{within}} - \bar{H}_{\mathrm{between}}}{\bar{H}_{\mathrm{within}} + \bar{H}_{\mathrm{between}}},
+\end{equation}
+where $\bar{H}_{\mathrm{between}}$ is the mean correlation between voxels in adjacent parcels.  Coverage is the fraction of grey-matter voxels assigned to at least one parcel.  A good parcellation has high homogeneity, high contrast, and near-complete coverage.
+
+\paragraph{Local-win / global-loss paradox.}
+Fine-grained parcellations (e.g.\ Schaefer 1000) achieve excellent spatial specificity, with each parcel tightly aligned to a functionally distinct patch of cortex (high homogeneity, high contrast).  However, with 1000 parcels the number of edges in the FC matrix ($\sim$500\,000) vastly exceeds what can be reliably estimated from a typical resting-state scan (200--400 time-points after scrubbing).  The resulting FC matrix is dominated by estimation noise, and fingerprinting accuracy and test--retest reliability drop sharply.
+
+%% ---------------------------------------------------------------
+\subsection{Step 9: Connectivity Metric (METRIC)}
+\label{app:metric}
+
+\paragraph{Layman explanation.}
+Once we have a time-series for each brain region, we need a way to measure how ``connected'' any two regions are.  The simplest approach is to compute the correlation between their time-series: if two regions consistently go up and down together, they are considered functionally connected.  But correlation only captures linear relationships and can be confounded by shared input from a third region.  More sophisticated metrics try to isolate direct connections from indirect ones.
+
+\paragraph{Technical description.}
+Given $N$ parcel time-series $\bar{\mathbf{X}} \in \mathbb{R}^{T \times N}$, the FC matrix $\mathbf{C} \in \mathbb{R}^{N \times N}$ is defined by a chosen connectivity estimator.
+
+\textbf{Pearson correlation.}  The sample correlation between parcels $i$ and $j$:
+\begin{equation}
+    C_{ij} = \frac{\bar{\mathbf{x}}_i^\top \bar{\mathbf{x}}_j}{\|\bar{\mathbf{x}}_i\| \, \|\bar{\mathbf{x}}_j\|}.
+\end{equation}
+Often followed by the Fisher $z$-transform $z_{ij} = \mathrm{arctanh}(C_{ij})$ to stabilise variance.
+
+\textbf{Partial correlation.}  The $(i,j)$ entry of the inverse of the correlation matrix (precision matrix), normalised to unit diagonal:
+\begin{equation}
+    C_{ij}^{\mathrm{partial}} = -\frac{\Theta_{ij}}{\sqrt{\Theta_{ii}\,\Theta_{jj}}}, \qquad \boldsymbol\Theta = \boldsymbol\Sigma^{-1},
+\end{equation}
+where $\boldsymbol\Sigma$ is the sample covariance.  Partial correlation removes the linear influence of all other regions, isolating direct connections.  However, when $N \gtrsim T$, $\boldsymbol\Sigma$ is singular and $\boldsymbol\Theta$ does not exist.
+
+\textbf{L2-regularised partial correlation (Ledoit--Wolf).}  Shrinks the sample covariance toward a structured target to ensure invertibility:
+\begin{equation}
+    \hat{\boldsymbol\Sigma}_{\mathrm{LW}} = (1 - \alpha)\,\boldsymbol\Sigma + \alpha\,\mu\,\mathbf{I},
+\end{equation}
+where $\alpha$ and $\mu$ are estimated analytically \citep{ledoit2004}.
+
+\textbf{L1 sparse inverse covariance (graphical LASSO).}  Estimates a sparse precision matrix by solving:
+\begin{equation}
+    \hat{\boldsymbol\Theta} = \arg\min_{\boldsymbol\Theta \succ 0} \;\bigl[-\log\det\boldsymbol\Theta + \mathrm{tr}(\boldsymbol\Sigma\boldsymbol\Theta) + \lambda\|\boldsymbol\Theta\|_1\bigr],
+\end{equation}
+where $\lambda$ controls sparsity \citep{friedman2008}.
+
+\textbf{Mutual information.}  A non-linear dependency measure: $I(X_i; X_j) = H(X_i) + H(X_j) - H(X_i, X_j)$, where $H$ denotes entropy, typically estimated via $k$-nearest-neighbour methods.
+
+\textbf{Wavelet coherence.}  Measures the frequency-resolved phase-locking between two signals in the time-frequency domain using the continuous wavelet transform.
+
+\textbf{Tangent embedding.}  Projects the set of subject-level covariance matrices onto the tangent space at the group-mean covariance, producing a Euclidean representation suitable for classification \citep{varoquaux2010}:
+\begin{equation}
+    \mathbf{S}_s = \boldsymbol\Sigma_{\mathrm{ref}}^{-1/2} \log\!\bigl(\boldsymbol\Sigma_{\mathrm{ref}}^{-1/2}\,\boldsymbol\Sigma_s\,\boldsymbol\Sigma_{\mathrm{ref}}^{-1/2}\bigr)\,\boldsymbol\Sigma_{\mathrm{ref}}^{-1/2},
+\end{equation}
+where $\boldsymbol\Sigma_{\mathrm{ref}}$ is the geometric mean of all subject covariance matrices and $\log$ is the matrix logarithm.
+
+\paragraph{Literature.}
+\citet{smith2011} compared connectivity estimators on simulated data with known ground-truth networks and found that regularised partial correlation recovered network structure most accurately, while Pearson correlation introduced many false edges from indirect connections.  \citet{pervaiz2020} tested multiple estimators on real HCP data and found that tangent embedding produced the best group-level discriminability and classification accuracy.  \citet{finn2015} demonstrated that Pearson FC matrices are sufficiently individual-specific to identify subjects across sessions (``fingerprinting''), with identification accuracy varying substantially by estimator and parcellation.
+
+\paragraph{Local metric: ICC, fingerprinting accuracy, and matrix rank.}
+We compute the intraclass correlation coefficient (ICC) for each FC edge across sessions:
+\begin{equation}
+    \mathrm{ICC}(3,1) = \frac{\mathrm{MS}_{\mathrm{between}} - \mathrm{MS}_{\mathrm{within}}}{\mathrm{MS}_{\mathrm{between}} + (k-1)\,\mathrm{MS}_{\mathrm{within}}},
+\end{equation}
+where $k$ is the number of sessions.  Fingerprinting accuracy is the proportion of subjects correctly identified across sessions (as defined in Section~\ref{sec:global_metrics}).  Matrix rank (or effective rank via the Shannon entropy of the singular-value distribution) indicates whether the estimator produces a full-rank or degenerate connectivity matrix.
+
+\paragraph{Local-win / global-loss paradox.}
+Partial correlation is theoretically superior for recovering direct connections \citep{smith2011}.  However, when the number of parcels approaches the number of time-points ($N \to T$), the sample precision matrix becomes unstable, and individual edges fluctuate wildly across sessions.  The result is an FC matrix that is ``correct in principle'' but so noisy that fingerprinting accuracy and test--retest ICC drop below what simple Pearson correlation achieves.  Regularisation (L1 or L2) partially addresses this, but the choice of regularisation strength introduces yet another researcher degree of freedom.
 
 \end{document}
